@@ -26,6 +26,7 @@
 <body>
   <div class="container">
     <div class="row">
+      <div class="video incoming" id="incoming-video"></div>
 
       <div class="col-xs-8 col-xs-offset-2" id="activity-container">
 
@@ -52,30 +53,29 @@
           </div>
           <hr />
 
-          <div id="video-container">
+          <!-- <div id="video-container">
             <h3>
               Video
-            </h3>
+            </h3> -->
 
-            <div class="video incoming" id="incoming-video"></div>
             <!-- <div class="col-sm-6">
                 <div class="video" id="outgoing-video"></div> -->
             <!-- </div> -->
-          </div>
+          <!-- </div> -->
 
           <hr />
 
           <div id="call-form">
-            <h4>
-              Make a Call
-            </h4>
-
 
             <div class="form-group call-initializer">
-              <button class="btn btn-success" id="initialize-call-btn">Call</button>
+              <button class="btn btn-success" id="initialize-call-btn">
+                Call your Doctor
+              </button>
             </div>
-            <div class="form-group call-terminator hidden">
-              <button class="btn btn-danger" id="initialize-end-btn">End Call</button>
+            <div class="form-group call-terminator">
+              <button class="btn btn-danger" id="initialize-end-btn">
+                End Call
+              </button>
             </div>
           </div>
           <div class="hidden" id="call-connected">
