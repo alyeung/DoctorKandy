@@ -7,6 +7,8 @@
 
 .todo {
   list-style-type: none;
+  font-size: 45px;
+  font-style: italic;
 }
 
 body {
