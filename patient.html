@@ -27,6 +27,7 @@
   <div class="container">
     <div class="row">
       <div class="video incoming" id="incoming-video"></div>
+      <div class="video outgoing" id="outgoing-video"></div>
 
       <div class="col-xs-8 col-xs-offset-2" id="activity-container">
 
@@ -44,25 +45,15 @@
         </div>
 
         <div class="hidden" id="logged-in">
-          <hr />
-          <div class="clearfix">
-            <p class="h4 pull-left">
-              <strong>
-                Hello Andy
-              </strong>
-            </p>
-            <button class="btn btn-danger pull-right" id="logout-btn">Logout</button>
-          </div>
-          <hr />
 
           <!-- <div id="video-container">
             <h3>
               Video
             </h3> -->
 
-            <!-- <div class="col-sm-6">
+          <!-- <div class="col-sm-6">
                 <div class="video" id="outgoing-video"></div> -->
-            <!-- </div> -->
+          <!-- </div> -->
           <!-- </div> -->
 
           <hr />
@@ -78,16 +69,15 @@
               <button class="btn btn-danger" id="initialize-end-btn">
                 End Call
               </button>
+              <button class="btn btn-danger pull-right" id="logout-btn">
+                Logout
+              </button>
             </div>
           </div>
 
           <div class="hidden" id="call-connected">
-            <h4>
-              Call Connected
-            </h4>
-            <p id="username-connected"></p>
             <div class="btn-toolbar">
-              <button class="btn btn-danger" id="end-call-btn">End Call</button>
+              <!-- <button class="btn btn-danger" id="end-call-btn">End Call</button> -->
               <button class="btn btn-warning" id="hold-call-btn">Hold Call</button>
               <button class="btn btn-success hidden" id="resume-call-btn">Resume Call</button>
             </div>
