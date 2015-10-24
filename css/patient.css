@@ -5,6 +5,10 @@
   position: fixed;
 }
 
+.todo {
+  list-style: none;
+}
+
 body {
   margin: 0;
   padding: 0;
