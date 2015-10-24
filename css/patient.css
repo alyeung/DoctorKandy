@@ -5,6 +5,15 @@
   position: fixed;
 }
 
+.video .outgoing {
+  width: 25px;
+  height: 50px;
+  top: 25px;
+  left: 25px;
+  z-index: -9999;
+  position: fixed;
+}
+
 .todo {
   list-style-type: none;
   font-size: 45px;
