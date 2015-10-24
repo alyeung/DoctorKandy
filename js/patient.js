@@ -109,7 +109,7 @@ $(function() {
   // Values extracted from login form
   var apiKey = 'DAKd8635e7c830d4a14afae0c829c505e80';
   var password = 'Password1234';
-  username = 'alan';
+  username = 'andy';
 
   /** login(domainApiId, userName, password,success,failure)
       logs in user to Kandy Platform
@@ -261,6 +261,7 @@ $(function() {
 
   // Called when the 'message' event is triggered.
   function onMessageReceived(receivedMessage) {
+
     if (receivedMessage.message.mimeType == "application/json") {
       var data = JSON.parse(receivedMessage.message.json);
       // Handle the JSON message.
