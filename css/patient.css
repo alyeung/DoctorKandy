@@ -7,10 +7,10 @@
 
 .outgoing {
   position: fixed;
-  width: 25px;
-  height: 50px;
+  width: 400px;
+  height: 200px;
   top: 25px;
-  left: 25px;
+  right: 25px;
   z-index: -9999;
 }
 
