@@ -1,1 +1,3 @@
-# kandy_io_hack 
+# Doctor Kandy
+
+  + [Live Demo](https://alyeung.github.io/DoctorKandy)
