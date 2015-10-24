@@ -1,168 +1,170 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Kandy | CoBrowsing Agent</title>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <meta name="csrf-param" content="authenticity_token" />
-    <meta name="csrf-token" content="GqPcSmQ9xyn8Vr+WWu5ihKHy/AN4E+h1JklbLUdopE1yQ6bViydo4q2mkiAka/8ZoPnZBZKAdSxWLQICJjGn4A==" />
-    <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
-    
-    <!--Load Bootstrap CSS (optional)-->
-    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
-    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
-    
-    <!--Load Kandy JS files --><script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
-    <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
-    
-    <!--Load Pace AJAX Progress Bar (optional)-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
-    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.css" />
-    <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/cobrowse/1.0.1/kandy.cobrowse.min.js"></script>
-    <script type="text/javascript">
-      $(function() {
+
+<head>
+  <title>Kandy | CoBrowsing Agent</title>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <meta name="csrf-param" content="authenticity_token" />
+  <meta name="csrf-token" content="GqPcSmQ9xyn8Vr+WWu5ihKHy/AN4E+h1JklbLUdopE1yQ6bViydo4q2mkiAka/8ZoPnZBZKAdSxWLQICJjGn4A==" />
+  <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
+
+  <!--Load Bootstrap CSS (optional)-->
+  <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+  <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
+
+  <!--Load Kandy JS files -->
+  <script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+  <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
+
+  <!--Load Pace AJAX Progress Bar (optional)-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+  <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.css" />
+  <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/cobrowse/1.0.1/kandy.cobrowse.min.js"></script>
+  <script type="text/javascript">
+    $(function() {
       kandy.setup({
-          
-        });
-        var listeners = {
-          'onJoinApprove': onSessionJoinApprove
-        };
-      
-        // Function to get sessions that have been created by all users
-        function getOpenSessions() {
-      
-          /** getOpenSessions(success, failure)
-              Gets a list of all open sessions.
-              @params <function> success/failure
-          */
-          kandy.session.getOpenSessions(
-            function (result) {
-              loadSessionList(result.sessions);
-            },
-            function (msg, code) {
-              alert('Error getting session info(' + code + '): ' + msg);
-            }
-          );
-        }
-      
-        // Event handler for onJoinApprove event
-        function onSessionJoinApprove(notification) {
-          UIState.sessionjoined();
-        }
-      
-        // Function to load Session Details
-        function loadSessionDetails() {
-          currentSession = sessions[parseInt($('#sessions-select').val())];
-      
-          $('#session-type').text(currentSession.session_type);
-          $('#session-status').text(currentSession.session_status);
-          $('#session-admin').text(currentSession.admin_full_user_id);
-      
-          if(currentSession.joined){
-            UIState.sessionjoined();
-          } else {
-            UIState.sessionleft();
+
+      });
+      var listeners = {
+        'onJoinApprove': onSessionJoinApprove
+      };
+
+      // Function to get sessions that have been created by all users
+      function getOpenSessions() {
+
+        /** getOpenSessions(success, failure)
+            Gets a list of all open sessions.
+            @params <function> success/failure
+        */
+        kandy.session.getOpenSessions(
+          function(result) {
+            loadSessionList(result.sessions);
+          },
+          function(msg, code) {
+            alert('Error getting session info(' + code + '): ' + msg);
           }
+        );
+      }
+
+      // Event handler for onJoinApprove event
+      function onSessionJoinApprove(notification) {
+        UIState.sessionjoined();
+      }
+
+      // Function to load Session Details
+      function loadSessionDetails() {
+        currentSession = sessions[parseInt($('#sessions-select').val())];
+
+        $('#session-type').text(currentSession.session_type);
+        $('#session-status').text(currentSession.session_status);
+        $('#session-admin').text(currentSession.admin_full_user_id);
+
+        if (currentSession.joined) {
+          UIState.sessionjoined();
+        } else {
+          UIState.sessionleft();
         }
-      
-        // Event handler for session join button
-        $('#session-join-btn').on('click', function() {
-          currentSession = sessions[parseInt($('#sessions-select').val())];
-          kandy.session.setListeners(currentSession.session_id, listeners);
-          kandy.session.join( currentSession.session_id, {},
-            function() {
-              console.log('Session join requested.  ID = ' + currentSession.session_id);
-              currentSession.joined = true;
-            },
-            function(msg, code) {
-              alert('Error joining session (' + code + '): ' + msg);
-            }
-          );
-        });
-      
-        // Event handler for session leave button
-        $('#session-leave-btn').on('click', function() {
-          kandy.session.leave( currentSession.session_id,
-            'Reason for leaving: Done with session',
-            function() {
-              currentSession.joined = false;
-              UIState.sessionleft();
-              kandy.CoBrowse.stopBrowsingAgent();
-              console.log('Session left.  ID = ' + currentSession.session_id);
-            },
-            function(msg, code) {
-              alert('Error leaving session (' + code + '): ' + msg);
-            }
-          );
-        });
-      
-        // Event handler for start co-browsing button
-        $('#start-cobrowsing-btn').on('click', function() {
-          UIState.cobrowsingstarted();
-          kandy.CoBrowse.startBrowsingAgent(currentSession.session_id, document.getElementById('cobrowsing-holder'));
-        });
-      
-        // Event handler for stop co-browsing button
-        $('#stop-cobrowsing-btn').on('click', function() {
-          UIState.cobrowsingstopped();
-          kandy.CoBrowse.stopBrowsingAgent();
-        });
-      
-        var username;
+      }
+
+      // Event handler for session join button
+      $('#session-join-btn').on('click', function() {
+        currentSession = sessions[parseInt($('#sessions-select').val())];
+        kandy.session.setListeners(currentSession.session_id, listeners);
+        kandy.session.join(currentSession.session_id, {},
+          function() {
+            console.log('Session join requested.  ID = ' + currentSession.session_id);
+            currentSession.joined = true;
+          },
+          function(msg, code) {
+            alert('Error joining session (' + code + '): ' + msg);
+          }
+        );
+      });
+
+      // Event handler for session leave button
+      $('#session-leave-btn').on('click', function() {
+        kandy.session.leave(currentSession.session_id,
+          'Reason for leaving: Done with session',
+          function() {
+            currentSession.joined = false;
+            UIState.sessionleft();
+            kandy.CoBrowse.stopBrowsingAgent();
+            console.log('Session left.  ID = ' + currentSession.session_id);
+          },
+          function(msg, code) {
+            alert('Error leaving session (' + code + '): ' + msg);
+          }
+        );
+      });
+
+      // Event handler for start co-browsing button
+      $('#start-cobrowsing-btn').on('click', function() {
+        UIState.cobrowsingstarted();
+        kandy.CoBrowse.startBrowsingAgent(currentSession.session_id, document.getElementById('cobrowsing-holder'));
+      });
+
+      // Event handler for stop co-browsing button
+      $('#stop-cobrowsing-btn').on('click', function() {
+        UIState.cobrowsingstopped();
+        kandy.CoBrowse.stopBrowsingAgent();
+      });
+
+      var username;
       var sessions = {};
       var currentUser = {};
       var currentSession;
       var userArray = [];
-      
+
       // Event handler for login button
       $('#login-btn').on('click', function(e) {
         e.preventDefault();
-      
+
         // Values extracted from login form
         username = $('#username').val();
         var apiKey = $('#api_key').val();
         var password = $('#password').val();
-      
+
         /** login(domainApiId, userName, password)
                   logs user into Kandy Platform
                   @params <string> domainApiId, <string> userName, <string> password
               */
         kandy.login(apiKey, username, password, function(results) {
-                  userArray.push(username);
-                  kandy.getLastSeen(userArray);
-                  UIState.authenticated();
-                  UIState.sessionsunavailable();
-                },
-                function (msg, code) {
-                  alert('Error loggin in:(' + code + '): ' + msg);
-                }
-              );
+            userArray.push(username);
+            kandy.getLastSeen(userArray);
+            UIState.authenticated();
+            UIState.sessionsunavailable();
+          },
+          function(msg, code) {
+            alert('Error loggin in:(' + code + '): ' + msg);
+          }
+        );
       });
-      
+
       // Event handler for logout button
-            $('#logout-btn').on('click', function(e) {
-              e.preventDefault();
-              kandy.getLastSeen(userArray);
-              /** logout()
-                  logs user out of Kandy Platform
-              */
-              kandy.logout();
-              UIState.unauthenticated();
-            });
-      
+      $('#logout-btn').on('click', function(e) {
+        e.preventDefault();
+        kandy.getLastSeen(userArray);
+        /** logout()
+            logs user out of Kandy Platform
+        */
+        kandy.logout();
+        UIState.unauthenticated();
+      });
+
       // Function to load sessions list and append options to #sessions-select
       function loadSessionList(sessionList, alertWhenNone) {
         $('#sessions-select').empty();
-      
+
         if (sessionList.length > 0) {
           var i = 0;
-      
+
           sessionList.forEach(function(session) {
             sessions[i] = sessionList[i];
             var $option = $('<option>').val(i).text(session.session_id);
             $('#sessions-select').append($option);
             i++;
           });
-      
+
           UIState.sessionsavailable();
           loadSessionDetails();
         } else {
@@ -174,170 +176,201 @@
           }
         }
       }
-      
+
       // Function to clear session details
       function clearSessionDetails() {
         $('#session-details li span').empty();
       }
-      
+
       // Event handler to load session details on change option
-      $('#sessions-select').change(function () {
+      $('#sessions-select').change(function() {
         loadSessionDetails();
       });
-      
+
       // Event handler for open sessions button
       $('#open-sessions').on('click', function() {
         getOpenSessions();
       });
-      
-        /** UIState is a custom piece of code that shuffles between UI states
+
+      /** UIState is a custom piece of code that shuffles between UI states
           eg:: If user is authenticated, the relevant DOM elements are brought to screen
           and the rest are hidden. Using this method is NOT recommended!
       */
-      
+
       var username, UIState = {};
-      
+
       UIState.authenticated = function() {
         $('#login-form').addClass('hidden');
         $('#logged-in').removeClass('hidden');
         $('.username').text(username);
       };
-      
+
       UIState.unauthenticated = function() {
         $('#login-form').removeClass('hidden');
         $('#logged-in').addClass('hidden');
         $('.username').text('');
       };
-      
+
       UIState.initial = function() {
         console.log('initial');
-      
+
         $audioRingIn[0].pause();
         $audioRingOut[0].pause();
-      
+
         $('#call-form p, #incoming-call p, #call-connected p').text('');
         $('#incoming-call, #call-connected, .call-terminator, #resume-call-btn').addClass('hidden');
         $('#call-form, .call-initializer').removeClass('hidden')
       };
-      
-        UIState.sessionsavailable = function() {
-          $('#session-results').removeClass('hidden');
-          $('#session-form').removeClass('hidden');
-          $('#session-details').removeClass('hidden');
-          $('#session-join-btn').removeClass('hidden');
-        };
-      
-        UIState.sessionsunavailable = function() {
-          $('#session-results').addClass('hidden');
-          $('#session-form').addClass('hidden');
-          $('#session-details').addClass('hidden');
-          $('#session-actions button').addClass('hidden');
-        };
-      
-        UIState.sessionjoined = function() {
-          $('#session-join-btn').addClass('hidden');
-          $('#session-leave-btn').removeClass('hidden');
-          $('#start-cobrowsing-btn').removeClass('hidden');
-        };
-      
-        UIState.sessionleft = function() {
-          $('#session-actions button').addClass('hidden');
-          $('#session-join-btn').removeClass('hidden');
-        };
-      
-        UIState.cobrowsingstarted = function() {
-          $('#session-actions button').addClass('hidden');
-          $('#session-leave-btn').removeClass('hidden');
-          $('#stop-cobrowsing-btn').removeClass('hidden');
-        };
-      
-        UIState.cobrowsingstopped = function() {
-          $('#session-actions button').addClass('hidden');
-          $('#session-leave-btn').removeClass('hidden');
-          $('#start-cobrowsing-btn').removeClass('hidden');
-        };
-      });
-    </script>
-    <style type="text/css">
-      iframe {
-        width: 100% !important;
-        height: 500px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="row">
-        <div class="col-xs-8 col-xs-offset-2" id="activity-container">
-          <div id="app-details">
-            <h1 class="h2">
-              Quick Start Sample App: CoBrowsing Agent
-            </h1>
-            <p>
-              This sample application demonstrates the code for CoBrowsing Agent with Kandy.
-            </p>
+
+      UIState.sessionsavailable = function() {
+        $('#session-results').removeClass('hidden');
+        $('#session-form').removeClass('hidden');
+        $('#session-details').removeClass('hidden');
+        $('#session-join-btn').removeClass('hidden');
+      };
+
+      UIState.sessionsunavailable = function() {
+        $('#session-results').addClass('hidden');
+        $('#session-form').addClass('hidden');
+        $('#session-details').addClass('hidden');
+        $('#session-actions button').addClass('hidden');
+      };
+
+      UIState.sessionjoined = function() {
+        $('#session-join-btn').addClass('hidden');
+        $('#session-leave-btn').removeClass('hidden');
+        $('#start-cobrowsing-btn').removeClass('hidden');
+      };
+
+      UIState.sessionleft = function() {
+        $('#session-actions button').addClass('hidden');
+        $('#session-join-btn').removeClass('hidden');
+      };
+
+      UIState.cobrowsingstarted = function() {
+        $('#session-actions button').addClass('hidden');
+        $('#session-leave-btn').removeClass('hidden');
+        $('#stop-cobrowsing-btn').removeClass('hidden');
+      };
+
+      UIState.cobrowsingstopped = function() {
+        $('#session-actions button').addClass('hidden');
+        $('#session-leave-btn').removeClass('hidden');
+        $('#start-cobrowsing-btn').removeClass('hidden');
+      };
+    });
+  </script>
+  <style type="text/css">
+    iframe {
+      width: 100% !important;
+      height: 500px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-8 col-xs-offset-2" id="activity-container">
+        <div id="app-details">
+          <h1 class="h2">
+            Quick Start Sample App: CoBrowsing Agent
+          </h1>
+          <p>
+            This sample application demonstrates the code for CoBrowsing Agent with Kandy.
+          </p>
+        </div>
+
+        <form id="login-form" class="simple_form form-horizontal" novalidate="novalidate" action="" accept-charset="UTF-8" method="post">
+          <input name="utf8" type="hidden" value="&#x2713;" />
+          <input type="hidden" name="authenticity_token" value="wBWsMsA8/nPy0Ksu8uO9yZQf9FzfpEeWnrpQlgbfwzWo9datLyZRuKMghpiMZiBUlRTRWjU32s/u3gm5Z4bAmA==" />
+          <div class="form-group string required quick_start_login_api_key">
+            <label class="string required col-sm-3 control-label" for="api_key">
+              <abbr title="required">*</abbr> Project API Key</label>
+            <div class="col-sm-9">
+              <input id="api_key" name="api_key" class="string required form-control" type="text" />
+            </div>
           </div>
-          
-          <form id="login-form" class="simple_form form-horizontal" novalidate="novalidate" action="" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="wBWsMsA8/nPy0Ksu8uO9yZQf9FzfpEeWnrpQlgbfwzWo9datLyZRuKMghpiMZiBUlRTRWjU32s/u3gm5Z4bAmA==" />
-                    <div class="form-group string required quick_start_login_api_key"><label class="string required col-sm-3 control-label" for="api_key"><abbr title="required">*</abbr> Project API Key</label><div class="col-sm-9"><input id="api_key" name="api_key" class="string required form-control" type="text" /></div></div>
-                    <div class="form-group string required quick_start_login_username"><label class="string required col-sm-3 control-label" for="username"><abbr title="required">*</abbr> Username</label><div class="col-sm-9"><input id="username" name="username" class="string required form-control" type="text" /></div></div>
-                    <div class="form-group password required quick_start_login_password"><label class="password required col-sm-3 control-label" for="password"><abbr title="required">*</abbr> Password</label><div class="col-sm-9"><input id="password" name="password" class="password required form-control" type="password" /></div></div>
-                    
-                    <div class="form-group">
-                      <div class="col-sm-offset-3 col-sm-9">
-                        <input type="submit" name="commit" value="Login" id="login-btn" class="btn btn-success" />
-                        
-                      </div>
-                    </div></form>
-          <div class="hidden" id="logged-in">
-            <hr />
-            <div class="clearfix">
-              <p class="h4 pull-left">
-                <strong>Hello <span class="username"></span></strong>
-              </p>
-              <button class="btn btn-danger pull-right" id="logout-btn">Logout</button>
+          <div class="form-group string required quick_start_login_username">
+            <label class="string required col-sm-3 control-label" for="username">
+              <abbr title="required">*</abbr> Username</label>
+            <div class="col-sm-9">
+              <input id="username" name="username" class="string required form-control" type="text" />
             </div>
+          </div>
+          <div class="form-group password required quick_start_login_password">
+            <label class="password required col-sm-3 control-label" for="password">
+              <abbr title="required">*</abbr> Password</label>
+            <div class="col-sm-9">
+              <input id="password" name="password" class="password required form-control" type="password" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-9">
+              <input type="submit" name="commit" value="Login" id="login-btn" class="btn btn-success" />
+
+            </div>
+          </div>
+        </form>
+        <div class="hidden" id="logged-in">
+          <hr />
+          <div class="clearfix">
+            <p class="h4 pull-left">
+              <strong>Hello
+                <span class="username"></span>
+              </strong>
+            </p>
+            <button class="btn btn-danger pull-right" id="logout-btn">Logout</button>
+          </div>
+          <hr />
+          <div id="session-container">
+            <h3>
+              Session Loading & Selection:
+            </h3>
             <hr />
-            <div id="session-container">
-              <h3>
-                Session Loading & Selection:
-              </h3>
-              <hr />
-              <button class="btn btn-success" id="open-sessions">Get Open Sessions</button>
-              <hr />
-              <div class="hidden" id="session-results">
-                <div id="session-form">
-                  <div class="form-group">
-                    <label for="sessions-select">Select Session</label>
-                    <select name="sessions-select" id="sessions-select" class="form-control"></select>
-                    
-                  </div>
-                  <hr />
+            <button class="btn btn-success" id="open-sessions">Get Open Sessions</button>
+            <hr />
+            <div class="hidden" id="session-results">
+              <div id="session-form">
+                <div class="form-group">
+                  <label for="sessions-select">Select Session</label>
+                  <select name="sessions-select" id="sessions-select" class="form-control"></select>
+
                 </div>
-                <ul class="hidden" id="session-details">
-                  <li>
-                    Type: <span id="session-type"></span>
-                  </li>
-                  <li>
-                    Status: <span id="session-status"></span>
-                  </li>
-                  <li>
-                    Admin: <span id="session-admin"></span>
-                  </li>
-                  <hr />
-                </ul>
-                <div id="session-actions">
-                  <div class="btn-toolbar">
-                    <button class="btn btn-success hidden" id="session-join-btn">Join Session</button><button class="btn btn-danger btn hidden" id="session-leave-btn">Leave Session</button><button class="btn btn-success hidden" id="start-cobrowsing-btn">Start CoBrowsing Viewer</button><button class="btn btn-warning hidden" id="stop-cobrowsing-btn">Stop CoBrowsing Viewer</button>
-                  </div>
-                  <hr />
-                </div>
+                <hr />
               </div>
-              <div id="cobrowsing-holder"></div>
+              <ul class="hidden" id="session-details">
+                <li>
+                  Type:
+                  <span id="session-type"></span>
+                </li>
+                <li>
+                  Status:
+                  <span id="session-status"></span>
+                </li>
+                <li>
+                  Admin:
+                  <span id="session-admin"></span>
+                </li>
+                <hr />
+              </ul>
+              <div id="session-actions">
+                <div class="btn-toolbar">
+                  <button class="btn btn-success hidden" id="session-join-btn">Join Session</button>
+                  <button class="btn btn-danger btn hidden" id="session-leave-btn">Leave Session</button>
+                  <button class="btn btn-success hidden" id="start-cobrowsing-btn">Start CoBrowsing Viewer</button>
+                  <button class="btn btn-warning hidden" id="stop-cobrowsing-btn">Stop CoBrowsing Viewer</button>
+                </div>
+                <hr />
+              </div>
             </div>
+            <div id="cobrowsing-holder"></div>
           </div>
         </div>
       </div>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
