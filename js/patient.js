@@ -55,7 +55,8 @@ $(function() {
       callinitiatefailed: onCallInitiateFail,
       oncall: onCall,
       callended: onCallTerminate,
-      callendfailed: onCallEndedFailed
+      callendfailed: onCallEndedFailed,
+      message: onMessageReceived,
     }
   });
 
@@ -261,7 +262,7 @@ $(function() {
 
   // Called when the 'message' event is triggered.
   function onMessageReceived(receivedMessage) {
-
+    console.log(receivedMessage);
     if (receivedMessage.message.mimeType == "application/json") {
       var data = JSON.parse(receivedMessage.message.json);
       // Handle the JSON message.
