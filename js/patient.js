@@ -115,11 +115,20 @@ $(function() {
       logs in user to Kandy Platform
       @params <string> domainApiId, <string> userName, <string> password, <function> success/failure
   */
-  kandy.login(apiKey, username, password, function(msg) {
+  kandy.login(apiKey, username, password,
+    function(msg) {
 
       userArray.push(username);
       kandy.getLastSeen(userArray);
       UIState.authenticated();
+
+      // console.log(kandy);
+
+      console.log("WORKED!");
+
+      $('#loader')
+        .addClass('hidden');
+
     },
     function(msg) {
       UIState.unauthenticated();
@@ -146,9 +155,9 @@ $(function() {
     $audioRingIn[0].pause();
     $audioRingOut[0].play();
 
-    $('#username-calling')
-      .text('Calling ' + $('#user_to_call')
-        .val());
+    // $('#username-calling')
+    //   .text('Calling Louis');
+
     UIState.callinitialized();
   }
 
@@ -167,21 +176,28 @@ $(function() {
     $('.call-initializer')
       .addClass('hidden');
   }; // Event handler for initiate call button
+
+      var tocall = 'louis@lololol.gmail.com';
   $('#initialize-call-btn')
     .on('click', function() {
-      var username = $('#user_to_call')
-        .val();
+      // var username = $('#user_to_call')
+      //   .val();
+
+
+      console.log('BUTTON IS WOKRING');
 
       /** makeCall( userName, cameraOn ) : Void
           Initiates a call to another Kandy user over web
           @params <string> userName, <boolean> cameraOn
       */
-      kandy.call.makeCall(username, true);
+      kandy.call.makeCall(tocall, true);
+
     });
   // Event handler for oncall event
   function onCall(call) {
     console.debug('oncall');
     $audioRingOut[0].pause();
+
     UIState.oncall();
   }
 

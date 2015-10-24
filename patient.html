@@ -7,11 +7,11 @@
   <meta name="csrf-param" content="authenticity_token" />
   <meta name="csrf-token" content="+O7O2ijGu7o8DIoQylQLtBDBp6TRQ9t6wxGKGItVsf+QDrRFx9wUcW38p6a00ZYpEcqCojvQRiOzddM36gyyUg==" />
   <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
-
+  <meta content="webcam, getUserMedia, video, stream" name="keywords">
   <!--Load Bootstrap CSS (optional)-->
   <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
   <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
-
+  <link rel="stylesheet" href="./css/patient.css" media="screen" title="no title" charset="utf-8">
   <!--Load Kandy JS files -->
   <script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
   <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
@@ -26,54 +26,26 @@
 <body>
   <div class="container">
     <div class="row">
+
       <div class="col-xs-8 col-xs-offset-2" id="activity-container">
-        <div id="app-details">
-          <h1 class="h2">
-            Quick Start Sample App: Make a Video Call
-          </h1>
-          <p>
-            This sample application demonstrates the code for initiating a video call with Kandy.
-          </p>
+
+        <div id="loader" class="loader">
+          <div class="ball"></div>
+          <div class="ball"></div>
+          <div class="ball"></div>
+          <div class="ball"></div>
+          <div class="ball"></div>
+          <div class="ball"></div>
+          <div class="ball"></div>
+          Please wait...
         </div>
-
-        <form id="login-form" class="simple_form form-horizontal" novalidate="novalidate" action="" accept-charset="UTF-8" method="post">
-          <input name="utf8" type="hidden" value="&#x2713;" />
-          <input type="hidden" name="authenticity_token" value="M9VGBsWJnG/wuIqCFeECv9PQjka04LXVBR6CRaGKvfJbNTyZKpMzpKFIpzRrZJ8i0turQF5zKIx1ettqwNO+Xw==" />
-          <div class="form-group string required quick_start_login_api_key">
-            <label class="string required col-sm-3 control-label" for="api_key">
-              <abbr title="required">*</abbr> Project API Key</label>
-            <div class="col-sm-9">
-              <input id="api_key" name="api_key" class="string required form-control" type="text" />
-            </div>
-          </div>
-          <div class="form-group string required quick_start_login_username">
-            <label class="string required col-sm-3 control-label" for="username">
-              <abbr title="required">*</abbr> Username</label>
-            <div class="col-sm-9">
-              <input id="username" name="username" class="string required form-control" type="text" />
-            </div>
-          </div>
-          <div class="form-group password required quick_start_login_password">
-            <label class="password required col-sm-3 control-label" for="password">
-              <abbr title="required">*</abbr> Password</label>
-            <div class="col-sm-9">
-              <input id="password" name="password" class="password required form-control" type="password" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <div class="col-sm-offset-3 col-sm-9">
-              <input type="submit" name="commit" value="Login" id="login-btn" class="btn btn-success" />
-            </div>
-          </div>
-        </form>
 
         <div class="hidden" id="logged-in">
           <hr />
           <div class="clearfix">
             <p class="h4 pull-left">
-              <strong>Hello
-                <span class="username"></span>
+              <strong>
+                Hello Andy
               </strong>
             </p>
             <button class="btn btn-danger pull-right" id="logout-btn">Logout</button>
@@ -86,7 +58,7 @@
             </h3>
             <div class="row">
               <div class="col-sm-6">
-                <div class="video" id="incoming-video"></div>
+                <div class="video incoming" id="incoming-video"></div>
               </div>
               <div class="col-sm-6">
                 <div class="video" id="outgoing-video"></div>
