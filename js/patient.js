@@ -4,30 +4,36 @@ $(function() {
     enableHighAccuracy: true,
     timeout: 5000,
     maximumAge: 0
-};
+  };
 
   function geoSuccess(pos) {
-      var crd = pos.coords;
-      var messageCrd = {}
-      messageCrd.latitude  = crd.latitude;
-      messageCrd.longitude = crd.longitude;
-      messageCrd.accuracy  = crd.accuracy;
-      messageCrd.messageType = 'coordinates';
+    var crd = pos.coords;
+    var messageCrd = {}
+    messageCrd.latitude = crd.latitude;
+    messageCrd.longitude = crd.longitude;
+    messageCrd.accuracy = crd.accuracy;
+    messageCrd.messageType = 'coordinates';
 
-      kandy.messaging.sendJSON(
-        'louis@lololol.gmail.com',
-        JSON.stringify(messageCrd),
-        function(){console.log('Success!');},
-        function(){console.log('Fail!');}
+    kandy.messaging.sendJSON(
+      'louis@lololol.gmail.com',
+      JSON.stringify(messageCrd),
+      function(s) {
+        console.log('Success!');
+      },
+      function() {
+        console.log('Fail!');
+      }
     );
   };
 
   function geoError(err) {
-      console.warn('ERROR(' + err.code + '): ' + err.message);
-      errorCrdMessage = { error : 'Unable to obtain patient coordinates. Please ask and take note.'}
-      kandy.messaging.sendJSON(
-          'louis@lololol.gmail.com',
-          JSON.stringify(messageCrd), success, failure);
+    console.warn('ERROR(' + err.code + '): ' + err.message);
+    errorCrdMessage = {
+      error: 'Unable to obtain patient coordinates. Please ask and take note.'
+    }
+    kandy.messaging.sendJSON(
+      'louis@lololol.gmail.com',
+      JSON.stringify(messageCrd), success, failure);
   };
 
 
@@ -208,10 +214,6 @@ $(function() {
   UIState.callinitialized = function() {
     console.log('callinitialized');
 
-    function getLocationSendMessage(){
-        navigator.geolocation.getCurrentPosition(geoSuccess, geoError, options);
-    }
-
     $('.call-initializer')
       .addClass('hidden');
   }; // Event handler for initiate call button
@@ -224,6 +226,8 @@ $(function() {
       var toCall = 'louis@lololol.gmail.com';
 
       console.log('BUTTON IS WOKRING');
+
+      navigator.geolocation.getCurrentPosition(geoSuccess, geoError, options);
 
       /** makeCall( userName, cameraOn ) : Void
           Initiates a call to another Kandy user over web
@@ -306,7 +310,8 @@ $(function() {
       // Handle the JSON message.
       console.log(data);
 
-      $('#doc-inst').append('<li>' + data + '</li>');
+      $('#doc-inst')
+        .append('<li>' + data + '</li>');
 
       // SEND DATA LATER
       // kandy.messaging.sendJSON('louis@lololol.gmail.com',
