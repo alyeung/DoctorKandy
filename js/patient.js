@@ -259,4 +259,13 @@ $(function() {
       .addClass('hidden');
   };
 
+  // Called when the 'message' event is triggered.
+  function onMessageReceived(receivedMessage) {
+    if (receivedMessage.message.mimeType == "application/json") {
+      var data = JSON.parse(receivedMessage.message.json);
+      // Handle the JSON message.
+      console.log(data);
+    }
+  }
+
 });

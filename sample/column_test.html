@@ -70,6 +70,7 @@
 					<button class="btn btn-warning" id="reject-call-btn">Reject Call</button>
 				</div>
 			</div>
+
 			<div class="hidden" id="call-connected">
 				<h4>
 					Call Connected
@@ -103,18 +104,35 @@
 			</div>
 
 			<div>
-				<form action="sendMessage()">
-					Instructions:
-					<input type="text" name="direction" maxlength="200" />
-					<br>
-					<input type="submit" value="Send" />
-				</form>
+				Instructions:
+				<input type="text" id="instruction" name="direction" maxlength="200"/>
+				<br>
+				<button id="send">Send</button>
 			</div>
 
 			<script>
-				function sendMessage() {
-					console.log("message!");
-				}
+				$(function() {
+
+					function success() {
+						console.log('Success!');
+
+					}
+
+					function failure(f) {
+						console.log('Failure!', f);
+					}
+
+					fullUserId = 'louis@lololol.gmail.com'
+
+					function sendMessage() {
+						currentMessage = $('#instruction').val();
+						console.log('message!', currentMessage);
+						kandy.messaging.sendJSON(fullUserId, JSON.stringify(currentMessage), success, failure);
+						$('#instruction').val('');
+					}
+
+					$('#send').click(sendMessage);
+				});
 				// kandy.messaging.sendJSON(fullUserId, object, success, failure);
 			</script>
 
