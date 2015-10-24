@@ -262,11 +262,18 @@ $(function() {
 
   // Called when the 'message' event is triggered.
   function onMessageReceived(receivedMessage) {
-    console.log(receivedMessage);
+    // console.log(receivedMessage);
     if (receivedMessage.message.mimeType == "application/json") {
       var data = JSON.parse(receivedMessage.message.json);
       // Handle the JSON message.
       console.log(data);
+
+      $('#doc-inst').append('<li>' + data + '</li>');
+
+      // SEND DATA LATER
+      // kandy.messaging.sendJSON('louis@lololol.gmail.com',
+      //   JSON.stringify(currentMessage), success, failure);
+
     }
   }
 
