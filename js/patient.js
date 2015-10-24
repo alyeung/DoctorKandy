@@ -18,7 +18,7 @@ $(function() {
       'louis@lololol.gmail.com',
       JSON.stringify(messageCrd),
       function(s) {
-        console.log('Success!');
+        console.log('Success!', messageCrd);
       },
       function() {
         console.log('Fail!');
