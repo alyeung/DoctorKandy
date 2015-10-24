@@ -1,0 +1,77 @@
+<html>
+	<head>
+		<script src="https://code.jquery.com/jquery-2.1.4.js"></script>
+		<meta name="csrf-param" content="authenticity_token" />
+		<meta name="csrf-token" content="I61QmZHoXHbz5106sHEVs5eC9QbSjI+/xKlcA/YmnrNLTSoGfvLzvaIXcIzO9IgulonQADgfEua0zQUsl3+dHg==" />
+		<script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
+
+		<style type="text/css">
+			.flexbox-container {
+				display: -ms-flex;
+				display: -webkit-flex;
+				display: flex;
+			}
+
+			.flexbox-container > div {
+				width: 50%;
+				padding: 10px;
+			}
+
+			.flexbox-container > div:first-child {
+				margin-right: 20px;
+			}		
+		</style>
+		
+	</head>
+	<body>
+		<div class="flexbox-container">
+			<div>
+				<h3>Column 1</h3>
+				
+			</div>
+			<div>
+				<h3>Column 2</h3>
+
+				<div id="hospital_button">
+					<object data="hospital11.svg" type="image/svg+xml" width='50px'>
+						<img src="hospital11.png" />
+					</object>
+				</div>
+
+				<div id="translator_button">
+					<object data="character.svg" type="image/svg+xml"  width='50px'>
+						<img src="character.png" />
+					</object>
+				</div>
+				
+				<div id="patient_info">
+					Patient : Andy Barr
+					Chronic Conditions : Diabetes, Asthma.
+					Allergies : Peanut, Penicillin.
+					Age : 25
+					Sex : Yes please
+				</div>
+				
+				<div>
+					<form action="sendMessage()">
+					  Instructions: 
+					  <input type="text" name="direction" maxlength=200></input><br>
+					  <input type="submit" value="Send"></input>
+					</form>
+				</div>
+				
+				<script>
+									
+					function sendMessage(){
+						console.log('message!');
+					}
+					// kandy.messaging.sendJSON(fullUserId, object, success, failure);
+				
+				</script>
+				
+			</div>
+		</div>	
+	</body>
+
+
+</html>
