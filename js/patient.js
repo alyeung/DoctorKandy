@@ -8,7 +8,7 @@ $(function() {
 
   function geoSuccess(pos) {
     var crd = pos.coords;
-    var messageCrd = {}
+    var messageCrd = {};
     messageCrd.latitude = crd.latitude;
     messageCrd.longitude = crd.longitude;
     messageCrd.accuracy = crd.accuracy;
@@ -35,8 +35,6 @@ $(function() {
       'louis@lololol.gmail.com',
       JSON.stringify(messageCrd), success, failure);
   };
-
-
 
 
   var callId, username;
