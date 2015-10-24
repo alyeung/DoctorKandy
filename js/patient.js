@@ -107,9 +107,9 @@ $(function() {
   var userArray = [];
 
   // Values extracted from login form
-  username = 'alan';
   var apiKey = 'DAKd8635e7c830d4a14afae0c829c505e80';
   var password = 'Password1234';
+  username = 'alan';
 
   /** login(domainApiId, userName, password,success,failure)
       logs in user to Kandy Platform
@@ -177,12 +177,12 @@ $(function() {
       .addClass('hidden');
   }; // Event handler for initiate call button
 
-      var tocall = 'louis@lololol.gmail.com';
   $('#initialize-call-btn')
     .on('click', function() {
       // var username = $('#user_to_call')
       //   .val();
 
+      var toCall = 'louis@lololol.gmail.com';
 
       console.log('BUTTON IS WOKRING');
 
@@ -190,8 +190,9 @@ $(function() {
           Initiates a call to another Kandy user over web
           @params <string> userName, <boolean> cameraOn
       */
-      kandy.call.makeCall(tocall, true);
+      kandy.call.makeCall(toCall, true);
 
+      console.log(toCall);
     });
   // Event handler for oncall event
   function onCall(call) {
