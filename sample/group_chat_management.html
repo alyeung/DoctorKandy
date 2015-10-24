@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Kandy | Chat Messaging</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="csrf-param" content="authenticity_token" />
+    <meta name="csrf-token" content="hkj1DTak1yISdLlFv205yw8YCHoD+eL9tS/DErh8QizuqI+S2b546UOElPPB6KRWDhMtfOlqf6TFS5o92SVBgQ==" />
+    <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
+    
+    <!--Load Bootstrap CSS (optional)-->
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
+    
+    <!--Load Kandy JS files --><script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
+    
+    <!--Load Pace AJAX Progress Bar (optional)-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.css" />
+    
+    <script type="text/javascript">
+      $(function() {
+      
+          kandy.setup({
+              
+          });
+      
+          var getAllGroups = {};
+      
+          String.prototype.isAlphaNumeric = function() {
+              var regExp = /^[A-Za-z0-9_]+$/;
+              return (this.match(regExp));
+          };
+          // To Show / Hide Tabs on User Click
+          $('#maintabs').on('click', 'li', function() {
+      
+              $('#maintabs li').each(function() {
+                  $(this).removeClass("active");
+                  var divId = $(this).children("a").attr("href");
+                  $(divId).hide();
+                  document.getElementById("resultMsg").style.display = "none";
+                  $("#createGroupName").val("");
+                  $("#groupDescription").val("");
+                  $("#groupNickName").val("");
+      
+              });
+              $(this).addClass("active");
+              var divId = $(this).children("a").attr("href");
+              $(divId).show();
+          });
+      
+          // To Show result on Manage Group Tab click
+          $("#editGroupDiv").on("click", function() {
+              getAllGroupsEdit();
+          });
+      
+          // To Show result on Manage Members Tab click
+          $("#addMemberDiv").on("click", function() {
+              fetchAllGroupNames();
+          });
+      
+      
+              // Checking group name already existing or not
+          var checkGroupsListExist = function(newGroupName, callback) {
+      
+              kandy.messaging.getGroups(function(results) {
+                  var flag = false;
+                  getAllGroups = results.groups;
+                  for (var i = 0; i < getAllGroups.length; i++) {
+      
+                      if (newGroupName == getAllGroups[i]["group_name"]) {
+                          flag = true;
+                      }
+                  }
+                  callback(flag);
+              });
+          }
+      
+          // Create Group
+          $("#createGroupBtn").on("click", function() {
+      
+              var groupName = $("#createGroupName").val();
+      
+              if (groupName.isAlphaNumeric() != null) {
+      
+                  checkGroupsListExist(groupName, function(groupExist) {
+      
+                      if (groupExist) {
+                          $("#createGroupError").text("Group Name already Exist!! Please try with different name");
+                          $('#resultMsg').hide();
+                      } else {
+                          $("#createGroupError").text("");
+      
+                          kandy.messaging.createGroup(groupName, "", onsuccessCreateGroup, onfailureCreateGroup);
+                      }
+                  });
+      
+              } else {
+                  $("#createGroupError").text("Please enter Alpha Numeric Only");
+      
+              }
+          });
+          // Callback for onsuccessCreateGroup
+          var onsuccessCreateGroup = function(message) {
+      
+              $('#resultMsg').show();
+              getAllGroupsEdit();
+          };
+          // Callback for onfailureCreateGroup
+          onfailureCreateGroup = function(message) {
+              console.log("OnFailure : " + JSON.stringify(message));
+          };
+      
+          // Fetch User List on Selecting Groups in Dropdown
+          $("#group-names").change(function() {
+              var group_id = $("#group-names option:selected").val();
+              fetchUserMembersGroup(group_id);
+          });
+      
+      
+          // Add Members to the Group
+          $("#add_member").on("click", function() {
+              var fullUsername = "";
+              var username = $('#username-search').val();
+              var group_name = $("#group-names option:selected").text();
+              var group_id = $("#group-names option:selected").val();
+      
+              var user_access_token = $("#user_access_token").html();
+      
+              var usernameArr = username.split("@");
+              var userNamelength = usernameArr.length;
+              if (userNamelength == 1) {
+                  fullUsername = username;
+              } else if (userNamelength > 1) {
+                  fullUsername = usernameArr[0];
+              }
+              var members = [];
+              members.push(fullUsername + "@" + domainName);
+      
+              var member = {
+                  "members": members
+              };
+      
+              kandy.messaging.addGroupMembers(group_id, members,
+      
+                  function(results) {
+                      fetchUserMembersGroup(group_id);
+                  },
+                  function(msg, code) {
+      
+                      alert('Error - something went wrong when we tried to addGroupMembers');
+                  }
+      
+              );
+          });
+      
+          // Fetch User Members from the selected Groups in Manage Users
+          fetchUserMembersGroup = function(group_id) {
+      
+                  kandy.messaging.getGroupById(group_id,
+      
+                      function(results) {
+                          $('#userdata').html("");
+                          var data = results.members;
+                          var muteStatus = "";
+      
+                          if (data.length) {
+      
+                              $('#userdata').show();
+                              $('.sendMsgTextNoMember').hide();
+                              for (i = 0; i < results.members.length; i++) {
+      
+                                  var attrHash = {
+                                      'data-user-name': data[i].full_user_id,
+                                      'data-muted-type': data[i].muted,
+                                      'data-group-type': "removeUser"
+                                  }
+                                  muteStatus = data[i].muted == false ? "Mute" : "UnMute";
+      
+                                  if(typeof data[i].muted == "string"){
+                                      muteStatus = data[i].muted == "false" ? "Mute" : "UnMute";
+                                  }
+                                  else{
+                                      muteStatus = data[i].muted == false ? "Mute" : "UnMute";
+      
+                                  }
+                                  var attrHashMute = {
+                                      'data-user-name': data[i].full_user_id,
+                                      'data-muted-type': data[i].muted,
+                                      'data-group-type': "muteUnmuteUser"
+                                  };
+                                  var username = data[i].full_user_id.split("@")[0];
+                                  var $listItem = $('<li class="clearfix" style="margin:5px;">');
+                                  var $username = $('<label class="pull-left" style="margin-right:10px;font-weight:normal;">' + data[i].full_user_id + '</label>');
+                                  var $muteButton = $('<button id=muteUserButton_' + username + ' class="btn btn-success btn-sm pull-right" style="margin-top:0px;margin-left:20px">').text(muteStatus).attr(attrHashMute);
+                                  var $button = $('<button id=user_' + i + ' class="btn btn-success btn-sm pull-right" style="margin-top:0px;margin-left:5px">').text('Remove').attr(attrHash);
+      
+                                  $listItem.append($username, $button, $muteButton);
+                                  $('#search-results ul').append($listItem);
+                              }
+                          } else {
+                              // no members for the group
+      
+                              $('#userdata').hide();
+                              $('.sendMsgTextNoMember').show();
+                          }
+      
+                      },
+                      function() {
+                          alert('Something went wrong when we did the search. Try again.');
+                      });
+              }
+              // Fetch All Groups created by the logged in User
+          fetchAllGroupNames = function() {
+                  kandy.messaging.getGroups(
+      
+                      function(results) {
+                          var tabId = "group-names";
+                          $('#' + tabId).html("");
+                          var groupList = results.groups;
+                          if (groupList) {
+                              var userArray = [];
+      
+                              for (i = 0; i < results.groups.length; i++) {
+      
+                                  var attrHash = {
+                                      'data-user-type': groupList[i].group_type,
+                                      'data-muted-type': groupList[i].muted
+                                  }
+                                  var $option = $('<option>');
+                                  $option.val(groupList[i].group_id).text(groupList[i].group_name).attr(attrHash);;
+                                  $('#' + tabId).append($option)
+      
+                              }
+      
+                              fetchUserMembersGroup(groupList[0].group_id);
+      
+                          } else {
+                              alert('Sorry, you have no groups created in your account');
+                          }
+                      },
+                      function() {
+                          alert('Error - something went wrong when we tried to fetch GroupList');
+                      }
+      
+                  );
+              }
+              // Generating UI for editing the Groups in Manage Group Tab
+          getAllGroupsEdit = function() {
+                  kandy.messaging.getGroups(
+      
+                      function(results) {
+                          $('#editGroup').html("");
+                          var groupList = results.groups;
+                          var muteStatus = "";
+                          if (groupList.length) {
+                              var userArray = [];
+      
+                              $('#contacts-container ul').append('<hr>');
+      
+                              for (i = 0; i < results.groups.length; i++) {
+      
+                                  muteStatus = groupList[i].muted == false ? "Mute" : "UnMute";
+                                  if(typeof groupList[i].muted == "string"){
+                                      muteStatus = groupList[i].muted == "false" ? "Mute" : "UnMute";
+                                  }
+                                  else{
+                                      muteStatus = groupList[i].muted == false ? "Mute" : "UnMute";
+                                  }
+      
+                                  var attrHashMute = {
+                                      'data-group-id': groupList[i].group_id,
+                                      'data-group-type': "muteUnmute"
+                                  }
+                                  var attrHash = {
+                                      'data-group-id': groupList[i].group_id,
+                                      'data-group-type': "edit"
+                                  }
+                                  var attrHashDelete = {
+                                      'data-group-id': groupList[i].group_id,
+                                      'data-group-type': "delete"
+                                  }
+      
+                                  var $listItem = $('<li class="clearfix" style="margin-bottom:20px;">');
+                                  var $group_text = $('<label class="pull-left" style="margin-right:10px;"> Group Name </label>');
+                                  var $group_name = $('<input id=' + groupList[i].group_id + ' type="text" class="pull-left" readonly>').val(groupList[i].group_name).attr('data-groupname', groupList[i].group_name);
+                                  var $muteButton = $('<button id=muteButton_' + groupList[i].group_id + ' class="btn btn-success btn-sm pull-right" style="margin-top:0px;margin-left:20px">').text(muteStatus).attr(attrHashMute);
+                                  var $button = $('<button id=button_' + groupList[i].group_id + ' class="btn btn-success btn-sm pull-right" style="margin-top:0px;margin-left:5px">').text('Edit Group').attr(attrHash);
+                                  var $delete_button = $('<button class="btn btn-success btn-sm pull-right" style="margin-top:0px;margin-left:20px">').text('Delete').attr(attrHashDelete);
+      
+      
+                                  $listItem.append($group_text, $group_name, $delete_button, $button, $muteButton);
+                                  $('#contacts-container ul').append($listItem);
+                              }
+      
+                          } else {
+                              alert('Sorry, you have no groups created in your account');
+                          }
+                      },
+                      function() {
+                          alert('Error - something went wrong when we tried to fetch GroupList');
+                      }
+      
+                  );
+              }
+      
+      
+          // Update, Mute / UnMute and Delete Group API calls
+      
+          $('#contacts-container').on('click', 'button', function() {
+              var contactId = $(this).data('group-id');
+              var attrHash = $(this).data('group-type');
+      
+              if (attrHash == "edit") {
+                  var button_textName = $("#button_" + contactId).text();
+                  if (button_textName == "Edit Group") {
+                      $("#" + contactId).attr('readonly', false);
+                      $("#button_" + contactId).html('Update');
+                  } else {
+                      var group_name = $('#' + contactId).val();
+                      $("#" + contactId).attr('readonly', true);
+                      $("#button_" + contactId).html('Edit Group');
+                      kandy.messaging.updateGroup(contactId, group_name, "", onSuccessUpdate, onFailureUpdate);
+                  }
+              } else if (attrHash == "muteUnmute") {
+                  var button_textName = $("#muteButton_" + contactId).text();
+                  if (button_textName == "Mute") {
+                      kandy.messaging.muteGroup(contactId, onSuccessMuteGroup, onFailureMuteGroup);
+                      $("#muteButton_" + contactId).html('UnMute');
+                  } else if (button_textName == "UnMute") {
+                      kandy.messaging.unmuteGroup(contactId, onSuccessUnMuteGroup, onFailureUnMuteGroup);
+                      $("#muteButton_" + contactId).html('Mute');
+                  }
+              } else {
+      
+                  kandy.messaging.deleteGroup(contactId, onSuccessDelete, onFailureDelete);
+              }
+      
+          });
+          // Callback function for Success Update Group
+          onSuccessUpdate = function(message) {
+              getAllGroupsEdit();
+          }
+      
+          // Callback function for Failure Update Group
+          onFailureUpdate = function(message) {
+              console.log("OnFailure Update: " + JSON.stringify(message));
+          }
+      
+          // Callback function for Success Mute Group
+          onSuccessMuteGroup = function(message) {
+      
+                  getAllGroupsEdit();
+              }
+              // Callback function for Failure Mute Group
+          onFailureMuteGroup = function(message) {
+              console.log("OnFailure Mute" );
+          }
+      
+          // Callback function for Success UnMute Group
+      
+          onSuccessUnMuteGroup = function(message) {
+      
+                  getAllGroupsEdit();
+              }
+              // Callback function for failure UnMute Group
+          onFailureUnMuteGroup = function(message) {
+              console.log("OnFailure UnMute");
+          }
+      
+          // callack functions for Success Delete Group
+          onSuccessDelete = function(message) {
+      
+                  getAllGroupsEdit();
+              }
+              // callack functions for failure Delete Group
+          onFailureDelete = function(message) {
+              console.log("OnFailure Delete");
+          }
+      
+          // Remove, Mute / UnMute Members in Group API Call
+          $('#search-results').on('click', 'button', function(cb) {
+      
+              var group_id = $("#group-names option:selected").val();
+              var username = $(this).data('user-name');
+              var attrHash = $(this).data('group-type');
+      
+              var members = [];
+      
+              if (attrHash == "removeUser") {
+                  var members = [];
+                  members.push(username);
+                  kandy.messaging.removeGroupMembers(group_id, members,
+      
+                      function(message) {
+                          // refresh the manage tab
+                          fetchUserMembersGroup(group_id);
+      
+                      }, onFailureDeleteMembers);
+              } else if (attrHash == "muteUnmuteUser") {
+      
+                  username = username.split("@")[0];
+                  var button_textName = $("#muteUserButton_" + username).text();
+                  if (button_textName == "Mute") {
+      
+                      kandy.messaging.muteGroupMember(group_id, members, onSuccessMuteUser, onFailureMuteUser);
+                      $("#muteUserButton_" + username).html('UnMute');
+                  } else if (button_textName == "UnMute") {
+      
+                      kandy.messaging.unmuteGroupMember(group_id, members, onSuccessUnMuteUser, onFailureUnMuteUser);
+                      $("#muteUserButton_" + username).html('Mute');
+                  }
+              }
+          });
+      
+          // Callback for Failure Delete Mambers
+          onFailureDeleteMembers = function(message) {
+              console.log("Delete Members failed");
+          }
+      
+          // Callback function for Success Mute Users in Group
+      
+          onSuccessMuteUser = function(message) {
+      
+                  getAllGroupsEdit();
+              }
+              // Callback function for Failure Mute Users in Group
+          onFailureMuteUser = function(message) {
+              console.log("OnFailure Mute");
+          }
+      
+          // Callback function for Success UnMute User in Group
+          onSuccessUnMuteUser = function(message) {
+      
+                  getAllGroupsEdit();
+              }
+              // Callback function for failure UnMute User in Group
+          onFailureUnMuteUser = function(message) {
+              console.log("OnFailure UnMute");
+          }
+      
+          // Call Send Message Method on Click Send Button
+          $('#send_msg').on('click', function() {
+              sendImToGroup();
+          });
+      
+      
+          
+        var domainName;
+         var userArray = [];
+      // Event handler for login form button
+        $('#login-btn').on('click', function(e) {
+            e.preventDefault();
+             // Values extracted from login form
+            username = $('#username').val();
+            var apiKey = $('#api_key').val();
+            var password = $('#password').val();
+             /** login(domainApiId, userName, password,success,failure)
+                logs in user to Kandy Platform
+                @params <string> domainApiId, <string> userName, <string> password
+            */
+            kandy.login(apiKey, username, password,
+                function(results){
+                    console.log("loginsuccess");
+                    var response = results;
+                    userArray.push(username);
+                    kandy.getLastSeen(userArray);
+                    UIState.authenticated();
+                     $('#user_access_token').text(response.user_access_token);
+                    getLimitedUserDetails(response.user_access_token);
+                },
+                function(msg,code) {
+                    console.debug('loginfailed');
+                    UIState.unauthenticated();
+                });
+        })
+         // Event handler for logout button
+        $('#logout-btn').on('click', function(e) {
+            e.preventDefault();
+            /** logout(success) logs a user out of the Kandy Platform
+                @param <function> success - Callback handler for
+                successful logout
+            */
+            kandy.logout(function() {
+                kandy.getLastSeen(userArray);
+                UIState.unauthenticated();
+            });
+        });
+        
+          // To get the domain name for the logged in User
+        getLimitedUserDetails = function(user_access_token) {
+                 kandy.getLimitedUserDetails(user_access_token,
+                     function(results) {
+                        domainName = results.full_user_id.split("@")[1];
+                    },
+                    function(msg, code) {
+                        alert("Error getting session info(" + code + "): " + msg);
+                    }
+                );
+            }
+      
+        /** UIState is a custom piece of code that shuffles between UI states
+          eg:: If user is authenticated, the relevant DOM elements are brought to screen
+          and the rest are hidden. Using this method is NOT recommended!
+      */
+      
+      var username, UIState = {};
+      
+      UIState.authenticated = function() {
+        $('#login-form').addClass('hidden');
+        $('#logged-in').removeClass('hidden');
+        $('.username').text(username);
+      };
+      
+      UIState.unauthenticated = function() {
+        $('#login-form').removeClass('hidden');
+        $('#logged-in').addClass('hidden');
+        $('.username').text('');
+      };
+      
+      UIState.initial = function() {
+        console.log('initial');
+      
+        $audioRingIn[0].pause();
+        $audioRingOut[0].pause();
+      
+        $('#call-form p, #incoming-call p, #call-connected p').text('');
+        $('#incoming-call, #call-connected, .call-terminator, #resume-call-btn').addClass('hidden');
+        $('#call-form, .call-initializer').removeClass('hidden')
+      };
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-8 col-xs-offset-2" id="activity-container">
+          <div id="app-details">
+            <h1 class="h2">
+              Quick Start Sample App: Group Chat Messaging
+            </h1>
+            <p>
+              This sample application demonstrates the code for chatting with another Kandy user
+            </p>
+          </div>
+          
+          <form id="login-form" class="simple_form form-horizontal" novalidate="novalidate" action="" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="6/up8B91+RBlYV/CAGPvm6NyERGoeUY5J3xMMUxcf+ODG9Nv8G9W2zSRcnR+5nIGonk0F0Lq22BXGBUeLQV8Tg==" />
+                    <div class="form-group string required quick_start_login_api_key"><label class="string required col-sm-3 control-label" for="api_key"><abbr title="required">*</abbr> Project API Key</label><div class="col-sm-9"><input id="api_key" name="api_key" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group string required quick_start_login_username"><label class="string required col-sm-3 control-label" for="username"><abbr title="required">*</abbr> Username</label><div class="col-sm-9"><input id="username" name="username" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group password required quick_start_login_password"><label class="password required col-sm-3 control-label" for="password"><abbr title="required">*</abbr> Password</label><div class="col-sm-9"><input id="password" name="password" class="password required form-control" type="password" /></div></div>
+                    
+                    <div class="form-group">
+                      <div class="col-sm-offset-3 col-sm-9">
+                        <input type="submit" name="commit" value="Login" id="login-btn" class="btn btn-success" />
+                        
+                      </div>
+                    </div></form>
+          <div class="hidden" id="logged-in">
+            <hr />
+            <div class="clearfix">
+              <p class="h4 pull-left">
+                <strong>Hello <span class="username"></span></strong>
+              </p>
+              <button class="btn btn-danger pull-right" id="logout-btn">Logout</button>
+            </div>
+            <hr />
+            <div id="maintabs">
+              <ul class="nav nav-tabs list" id="myTab">
+                <li class="active">
+                  <a href="#create"> Create Group</a>
+                </li>
+                <li id="editGroupDiv">
+                  <a href="#edit"> Manage Groups</a>
+                </li>
+                <li id="addMemberDiv">
+                  <a href="#addmember"> Manage Members</a>
+                </li>
+              </ul>
+            </div>
+            <div id="create">
+              <div class="form-group">
+                <label for="createGroupName">Group Name</label>
+                <input type="text" name="createGroupName" id="createGroupName" class="form-control" />
+                <span id="createGroupError" style="color: red; font-size: 12px;"></span>
+                <div id="clearfix"></div>
+                <label for="groupDescription">Group Description</label>
+                <input type="text" name="groupDescription" id="groupDescription" class="form-control" />
+                <label for="groupNickName">Group Nickname</label>
+                <input type="text" name="groupNickName" id="groupNickName" class="form-control" />
+                <button name="button" type="submit" class="btn btn-success" id="createGroupBtn" style="margin-top: 10px">Create</button>
+                <span id="resultMsg" style="display:none;color: green; font-size: 12px;">New Group is created Successfully</span>
+                
+              </div>
+            </div>
+            <div id="edit" style="display:none">
+              <div id="contacts-container">
+                <table></table>
+                <ul class="list-unstyled" id="editGroup"></ul>
+              </div>
+            </div>
+            <div id="addmember" style="display:none">
+              <div class="form-group">
+                <label for="chat-contacts">Select Group</label><select name="group-names" id="group-names" class="form-control" style="width:81%;margin-right: 24px"></select>
+                
+                <div id="search-results">
+                  <h4 id="Group">
+                    Members
+                  </h4>
+                  <ul class="list-unstyled" id="userdata" style="display:none"></ul>
+                  <label class="sendMsgTextNoMember" style="padding-bottom: 20px; font-size: 13px; font-weight: normal; margin-left: 10px; display: none;" for="sendMsgTextNoMember">The group selected has no members added</label>
+                  
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="username-search">Username (enter users to add to the selected group above)</label>
+                <input type="text" name="username-search" id="username-search" class="form-control" />
+                <button name="button" type="submit" class="btn btn-success" id="add_member" style="margin: 10px 10px 10px 0">Add Member</button>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

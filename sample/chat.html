@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Kandy | Chat Messaging</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="csrf-param" content="authenticity_token" />
+    <meta name="csrf-token" content="uQF5k1eNX6uyMp5+AQjsjVJD8D34JaSzlhIe3KIs0hjR4QMMuJfwYOPCs8h/jXEQU0jVOxK2Oermdkfzw3XRtQ==" />
+    <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
+    
+    <!--Load Bootstrap CSS (optional)-->
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
+    
+    <!--Load Kandy JS files --><script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
+    
+    <!--Load Pace AJAX Progress Bar (optional)-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.css" />
+    
+    <script type="text/javascript">
+      $(function() {
+      
+         // Function that loads all Kandy contacts and appends to DOM
+      function loadContacts() {
+      
+        /** retrievePersonalAddressBook(success, failure)
+            Retrieve all entries of the user's personal address book
+            @params <function> success, <function> failure
+        */
+        kandy.addressbook.retrievePersonalAddressBook(function(results) {
+      
+          // results object is an array of address book entries sent by Kandy
+          // on successful address book retrieval
+          if (results.length) {
+      
+            // Iterate through entries and append contacts to DOM
+            results.forEach(function(entry) {
+              var $option = $('<option>');
+      
+              $option.val(entry.contact_user_name).text(entry.contact_user_name);
+              $('#chat-contacts').append($option);
+            });
+          } else {
+            alert('Sorry, you have no contacts in your address book');
+          }
+        }, function () {
+            alert('Error - something went wrong when we tried to access your address book.');
+        });
+      }
+      
+      // Event handler for send message button
+      $('#chat-btn').on('click', function() {
+        sendMessage();
+      });
+      
+      
+         /** setup(config) intializes kandy
+            @param <object> config
+          */
+          kandy.setup({
+            
+            // listeners registers events to handlers
+            // You can handle all Kandy Events by registering it here
+            listeners: {
+              message: onMessagesAvailable
+            }
+          });
+      
+        // Function to send message to another Kandy user
+        function sendMessage() {
+          var message = $('#chat-message').val();
+          var sendTo = $('#chat-contacts').val();
+      
+          /** sendIm(userName, message, success, failure)
+              Sends a message via chat
+              @params <string> userName, <string> message, <function> success/failure
+          */
+          kandy.messaging.sendIm(sendTo, message, function () {
+      
+            // On successful send, append chat item to DOM
+            $('#chat-message').val('');
+            var $chatItem = $('<div class="well text-right">')
+            var $username = $('<h5>').text(username);
+            var $message = $('<p>').text(message);
+      
+            $chatItem.append($username, $message);
+            $('#chat-messages').append($chatItem);
+          },
+          function () {
+              alert('IM send failed');
+            }
+          );
+        }
+      
+        // Event handler for messagesavailable
+          // receive messages from other Kandy users
+          function onMessagesAvailable(message){
+      
+      
+             if(message.messageType == 'chat' && message.contentType === 'text' && message.message.mimeType == 'text/plain') {
+                  var $username = $('<h5>').text(message.sender.user_id);
+                  var $message = $('<p>').text(message.message.text);
+                  var $chatItem = $('<div class="well text-left">')
+      
+                  $chatItem.append($username, $message);
+                  $('#chat-messages').append($chatItem);
+                }
+      
+          }
+      
+        var username;
+      var userArray=[];
+      
+      // Event handler for login form button
+      $('#login-btn').on('click', function(e) {
+        e.preventDefault();
+      
+        // Values extracted from login form
+        username = $('#username').val();
+        var apiKey = $('#api_key').val();
+        var password = $('#password').val();
+      
+        /** login(domainApiId, userName, password,success,failure)
+            logs in user to Kandy Platform
+            @params <string> domainApiId, <string> userName, <string> password,  <function> success/failure
+        */
+        kandy.login(apiKey, username, password,function(msg){
+          userArray.push(username);
+          kandy.getLastSeen(userArray);
+          UIState.authenticated();
+          loadContacts();
+        },
+        function(msg){
+          UIState.unauthenticated();
+          alert('Login Failed!');
+       });
+      });
+      
+      // Event handler for logout button
+      $('#logout-btn').on('click', function() {
+      
+        /** logout(success) logs a user out of the Kandy Platform
+            @param <function> success - Callback handler for
+            successful logout
+        */
+        kandy.logout(function() {
+          userArray.push(username);
+          kandy.getLastSeen(userArray);
+          UIState.unauthenticated();
+        });
+      });
+      
+        /** UIState is a custom piece of code that shuffles between UI states
+          eg:: If user is authenticated, the relevant DOM elements are brought to screen
+          and the rest are hidden. Using this method is NOT recommended!
+      */
+      
+      var username, UIState = {};
+      
+      UIState.authenticated = function() {
+        $('#login-form').addClass('hidden');
+        $('#logged-in').removeClass('hidden');
+        $('.username').text(username);
+      };
+      
+      UIState.unauthenticated = function() {
+        $('#login-form').removeClass('hidden');
+        $('#logged-in').addClass('hidden');
+        $('.username').text('');
+      };
+      
+      UIState.initial = function() {
+        console.log('initial');
+      
+        $audioRingIn[0].pause();
+        $audioRingOut[0].pause();
+      
+        $('#call-form p, #incoming-call p, #call-connected p').text('');
+        $('#incoming-call, #call-connected, .call-terminator, #resume-call-btn').addClass('hidden');
+        $('#call-form, .call-initializer').removeClass('hidden')
+      };
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-8 col-xs-offset-2" id="activity-container">
+          <div id="app-details">
+            <h1 class="h2">
+              Quick Start Sample App: Chat Messaging
+            </h1>
+            <p>
+              This sample application demonstrates the code for chatting with another Kandy user
+            </p>
+          </div>
+          
+          <form id="login-form" class="simple_form form-horizontal" novalidate="novalidate" action="" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="h3NP3kxe/HgVG/phZtymNWLVE/pmiSkfcuiGKpq/Wq3vkzVBo0RTs0Tr19cYWTuoY942/IwatEYCjN8F++ZZAA==" />
+                    <div class="form-group string required quick_start_login_api_key"><label class="string required col-sm-3 control-label" for="api_key"><abbr title="required">*</abbr> Project API Key</label><div class="col-sm-9"><input id="api_key" name="api_key" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group string required quick_start_login_username"><label class="string required col-sm-3 control-label" for="username"><abbr title="required">*</abbr> Username</label><div class="col-sm-9"><input id="username" name="username" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group password required quick_start_login_password"><label class="password required col-sm-3 control-label" for="password"><abbr title="required">*</abbr> Password</label><div class="col-sm-9"><input id="password" name="password" class="password required form-control" type="password" /></div></div>
+                    
+                    <div class="form-group">
+                      <div class="col-sm-offset-3 col-sm-9">
+                        <input type="submit" name="commit" value="Login" id="login-btn" class="btn btn-success" />
+                        
+                      </div>
+                    </div></form>
+          <div class="hidden" id="logged-in">
+            <hr />
+            <div class="clearfix">
+              <p class="h4 pull-left">
+                <strong>Hello <span class="username"></span></strong>
+              </p>
+              <button class="btn btn-danger pull-right" id="logout-btn">Logout</button>
+            </div>
+            <hr /><div id="chat-container">
+  <h3>
+    Messages
+  </h3>
+  <div id="chat-messages"></div>
+  <hr />
+  <div id="chat-input">
+    <div class="form-group">
+      <label for="chat-contacts">Select Contact</label>
+      <select name="chat-contacts" id="chat-contacts" class="form-control"></select>
+      
+    </div>
+    <div class="form-group">
+      <label for="chat-message">Chat Message</label>
+      <textarea name="chat-message" id="chat-message" class="form-control">
+</textarea>
+      
+    </div>
+    <button name="button" type="submit" class="btn btn-success" id="chat-btn">Send</button>
+    
+  </div>
+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

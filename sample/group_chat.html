@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Kandy | Chat Messaging</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="csrf-param" content="authenticity_token" />
+    <meta name="csrf-token" content="u6z8HgIyJu87ivdzkPQ6QnjiQon0100mIuM8MsBkwTfTTIaB7SiJJGp62sXucaffeelnjx5E0H9Sh2UdoT3Cmg==" />
+    <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
+    
+    <!--Load Bootstrap CSS (optional)-->
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
+    
+    <!--Load Kandy JS files --><script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
+    
+    <!--Load Pace AJAX Progress Bar (optional)-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.css" />
+    
+    <script type="text/javascript">
+      $(function() {
+      
+      var userArray = [];
+      
+       kandy.setup({
+          
+          // listeners registers events to handlers
+          // You can handle all Kandy Events by registering it here
+          listeners: {
+              chatGroupMessage: onchatGroupMessage,
+              chatGroupInvite: onchatGroupInvite,
+              chatGroupBoot: onchatGroupBoot,
+              chatGroupLeave: onchatGroupLeave,
+              chatGroupUpdate: onchatGroupUpdate,
+              chatGroupDelete: onchatGroupDelete
+          }
+      });
+      
+         // Event handler for onchatGroupInvite event
+      function onchatGroupInvite(message) {
+          if (message.length > 0) {
+          var inviter = message.inviter;
+          var groupId = message.group_id;
+      
+          kandy.messaging.getGroupById(groupId,
+      
+              function(results) {
+                  var groupName = results.group_name;
+                  groupNameArr = inviter.split("@");
+                  var LoggedUser = $(".username").text();
+                  if (groupNameArr[0] != LoggedUser)
+                      alert("User : " + inviter + " is invited to this Group : " + groupName);
+                  fetchAllGroupNames();
+              },
+              function() {
+                  alert("Something went wrong when we did the search. Try again.");
+              });
+          }
+      
+      }
+      
+       // Event handler for onchatGroupBoot event
+      function onchatGroupBoot(message) {
+          console.log("onchatGroupBoot success");
+      }
+      
+      // Event handler for onchatGroupLeave event
+      function onchatGroupLeave(message) {
+          var leaver = message.leaver;
+          var groupId = message.group_id;
+          kandy.messaging.getGroupById(groupId,
+      
+              function(results) {
+                  var groupName = results.group_name;
+                  groupNameArr = leaver.split("@");
+                  var LoggedUser = $(".username").text();
+                  if (groupNameArr[0] != LoggedUser)
+                      alert("User :" + leaver + " is left from this Group :" + groupName);
+                  else
+                      alert("You are removed from this Group : " + groupName);
+                  fetchAllGroupNames();
+              },
+              function() {
+                  alert('Something went wrong when we did the search. Try again.');
+              });
+      
+      }
+      
+      // Event handler for onchatGroupUpdate event
+      function onchatGroupUpdate(message) {
+          if (message.length > 0) {
+              var groupName = message.group_name;
+              var groupId = message.group_id;
+              fetchAllGroupNames();
+              alert("GroupName was updated as : " + groupName);
+          }
+      }
+      
+      // Event handler for onchatGroupDelete event
+      function onchatGroupDelete(message) {
+          console.log("onchatGroupDelete :" + JSON.stringify(message));
+          if (message.length > 0) {
+              var eraser = message.eraser;
+              var groupId = message.group_id;
+              kandy.messaging.getGroupById(groupId,
+      
+                  function(results) {
+                      var groupName = results.group_name;
+                      alert("User :" + eraser + " is deleted this Group :" + groupName);
+                      fetchAllGroupNames();
+                  },
+                  function() {
+                      alert('Something went wrong when we did the search. Try again.');
+                  });
+          }
+      
+      }
+      
+      // Event handler for onchatGroupMessage event
+      function onchatGroupMessage(message) {
+          var msgType = message.messageType;
+          var sendername = message.sender.user_id;
+      
+          if (msgType == "groupChat") {
+      
+              var contentType = message.contentType;
+              if (contentType == "text") {
+      
+                  var msgTextSend = message.message.text;
+      
+                  var $chatItem = $('<div class="well text-left">');
+                  var $username = $('<h5>').text(sendername);
+                  var $message = $('<p>').text(msgTextSend);
+      
+                  $chatItem.append($username, $message);
+              } else if (contentType == "file") {
+                  var userToken = $('#user_access_token').text();
+                  var fileName = message.message.content_name;
+                  var contentId = message.message.content_uuid;
+      
+                  var downloadUrl = kandy.messaging.buildFileUrl(contentId);
+      
+                  var $chatItem = $('<div class="well text-left">');
+                  var $content = $('<a href='+downloadUrl+' target="_blank">');
+                  var $username = $('<h5>').text(sendername);
+                  var $message = $content.text(fileName);
+      
+                  $chatItem.append($username, $message);
+              } else if (contentType == "image") {
+                  var userToken = $('#user_access_token').text();
+                  var fileName = message.message.content_name;
+                  var contentId = message.message.content_uuid;
+                  var $chatItem = $('<div class="well text-left">');
+                   var downloadUrl = kandy.messaging.buildFileUrl(contentId);
+                  var $content = $('<a href='+downloadUrl+' target="_blank">');
+                  var $username = $('<h5>').text(sendername);
+                  var $message = $content.text(fileName);
+      
+                  $chatItem.append($username, $message);
+              } else if (contentType == "audio") {
+                  var userToken = $('#user_access_token').text();
+                  var fileName = message.message.content_name;
+                  var contentId = message.message.content_uuid;
+                  var $chatItem = $('<div class="well text-left">');
+                   var downloadUrl = kandy.messaging.buildFileUrl(contentId);
+                  var $content = $('<a href='+downloadUrl+' target="_blank">');
+                  var $username = $('<h5>').text(sendername);
+                  var $message = $content.text(fileName);
+      
+                  $chatItem.append($username, $message);
+              } else if (contentType == "video") {
+                  var userToken = $('#user_access_token').text();
+                  var fileName = message.message.content_name;
+                  var contentId = message.message.content_uuid;
+                  var $chatItem = $('<div class="well text-left">');
+                   var downloadUrl = kandy.messaging.buildFileUrl(contentId);
+                  var $content = $('<a href='+downloadUrl+' target="_blank">');
+                  var $username = $('<h5>').text(sendername);
+                  var $message = $content.text(fileName);
+      
+                  $chatItem.append($username, $message);
+              }
+              $('#chat-messages').append($chatItem);
+          }
+      }
+      
+       String.prototype.isAlphaNumeric = function() {
+          var regExp = /^[A-Za-z0-9_]+$/;
+          return (this.match(regExp));
+      };
+      
+      // Fetch User List on Selecting Groups in Dropdown
+      $("#group-names-send").change(function() {
+          var group_id = $("#group-names-send option:selected").val();
+          fetchUserMembersGroupMessaging(group_id);
+      });
+      
+      // Fetch User Members from the selected Groups in Messaging
+      fetchUserMembersGroupMessaging = function(group_id) {
+          if (group_id == "0") {
+              $("#chatUserdata").hide();
+              $("#groupHeading").hide();
+              $('.sendMsgTextNoMember').show();
+              $('#send_file').prop('disabled', true);
+              $('#imFile').prop('disabled', true);
+              $('#send_msg').prop('disabled', true);
+          } else {
+      
+              kandy.messaging.getGroupById(group_id,
+      
+                  function(results) {
+                      $('#chatUserdata').html("");
+                      var data = results.members;
+      
+                      if (data.length) {
+                          $("#chatUserdata").show();
+                          $("#groupHeading").show();
+                          $('.sendMsgTextNoMember').hide();
+      
+                          $('#chatUserdata').show();
+                          $('#chat-message').removeAttr("readonly");
+                          $('#send_msg').prop('disabled', false);
+                          $('#send_file').prop('disabled', false);
+                          $('#imFile').prop('disabled', false);
+      
+                          data.forEach(function(entry) {
+      
+                              var $listItem = $('<li class="clearfix" style="margin:5px;">');
+                              var $username = $('<label class="pull-left" style="margin-right:10px;font-weight:normal;">' + entry.full_user_id + '</label>');
+                              $listItem.append($username);
+                              $('#chatUserdata').append($listItem);
+                          });
+      
+                      } else {
+      
+                          $('#chat-message').attr('readonly', 'true');
+                          $('#send_msg').prop('disabled', true);
+                          $('#send_file').prop('disabled', true);
+                          $('#imFile').prop('disabled', true);
+                          $('.sendMsgTextNoMember').show();
+                          $('#chatUserdata').hide();
+                      }
+                  },
+                  function() {
+                      alert('Something went wrong when we did the search. Try again.');
+                  });
+              }
+      }
+      
+      // Fetch All Groups created by the logged in User
+      fetchAllGroupNames = function() {
+          kandy.messaging.getGroups(
+      
+              function(results) {
+                  var tabId = "group-names-send";
+                  $('#' + tabId).html("");
+                  var groupList = results.groups;
+                  if (groupList) {
+                      var userArray = [];
+                      var attrHash = {
+                          'data-user-type': "none",
+                          'data-muted-type': "none"
+                      }
+                      var $option = $('<option>');
+                      $option.val(0).text("Select Group").attr(attrHash);
+                      $('#' + tabId).append($option);
+                      for (i = 0; i < results.groups.length; i++) {
+      
+                          var attrHash = {
+                              'data-user-type': groupList[i].group_type,
+                              'data-muted-type': groupList[i].muted
+                          }
+                          var $option = $('<option>');
+                          $option.val(groupList[i].group_id).text(groupList[i].group_name).attr(attrHash);
+                          $('#' + tabId).append($option);
+                      }
+                      fetchUserMembersGroupMessaging("0");
+                  } else {
+                      alert('Sorry, you have no groups created in your account');
+                  }
+              },
+              function() {
+                  alert('Error - something went wrong when we tried to fetch GroupList');
+              }
+          );
+      }
+      
+      // Send Message to Selected Group
+      sendImToGroup = function() {
+      
+          var selectedGrpObj = $("#group-names-send option:selected");
+          var group_id = selectedGrpObj.val();
+          var groupName = selectedGrpObj.text();
+          var msgText = $("#chat-message").val();
+          kandy.messaging.sendGroupIm(group_id, msgText, onsendImToGroupSuccess, onsendImToGroupFailure);
+      }
+      
+      // callback function for Success sendImToGroup
+      onsendImToGroupSuccess = function(message) {
+      
+              var message = $('#chat-message').val();
+              var selectedGrpObj = $("#group-names-send option:selected").val();
+              var groupName = $("#group-names-send option:selected").text();
+              $('#chat-message').val('');
+              var $chatItem = $('<div class="well text-right">');
+              var $username = $('<h5>').text($('.username').html());
+              var $message = $('<p>').text(message);
+      
+              $chatItem.append($username, $message);
+              $('#chat-messages').append($chatItem);
+          }
+      // callback function for failure sendImToGroup
+      onsendImToGroupFailure = function(message) {
+      
+          console.log("onsendImToGroupFailure : " + JSON.stringify(message));
+      }
+      
+      // Call Send Message Method on Click Send Button
+      $('#send_msg').on('click', function() {
+          sendImToGroup();
+      });
+      
+      // Send File to Selected Group
+      sendImWithFileToGroup = function() {
+      
+          var selectedGrpObj = $("#group-names-send option:selected");
+          var group_id = selectedGrpObj.val();
+          var groupName = selectedGrpObj.text();
+          var file = document.getElementById("imFile").files[0];
+          kandy.messaging.sendGroupImWithFile(group_id, file, onsendImWithFileToGroupSuccess, onsendImWithFileToGroupFailure);
+      }
+      
+      // callback function for Success sendImWithFileToGroup
+      onsendImWithFileToGroupSuccess = function(message) {
+              var fileName = "";
+              var selectedGrpObj = $("#group-names-send option:selected").val();
+              var groupName = $("#group-names-send option:selected").text();
+              fileName = message.message.content_name;
+              var $chatItem = $('<div class="well text-right">');
+              var $username = $('<h5>').text($('.username').html());
+              var $message = $('<p>').text(fileName);
+      
+              $('#imFile').val('');
+              $chatItem.append($username, $message);
+              $('#chat-messages').append($chatItem);
+          }
+      // callback function for failure sendImWithFileToGroup
+      onsendImWithFileToGroupFailure = function(message) {
+      
+          console.log("onsendImWithFileToGroupFailure");
+      }
+      // Call Send File Method on Click Send Button
+      $('#send_file').on('click', function() {
+      
+          var chatOption = $('input[name=chatRadioButton]:checked').val();
+          if (chatOption == "sendFile")
+              sendImWithFileToGroup();
+          else if (chatOption == "sendImage")
+              sendImWithImageToGroup();
+          else if (chatOption == "sendAudio")
+              sendImWithAudioToGroup();
+          else if (chatOption == "sendVideo")
+              sendImWithVideoToGroup();
+      });
+      
+      // Send Image to Selected Group
+      sendImWithImageToGroup = function() {
+      
+          var selectedGrpObj = $("#group-names-send option:selected");
+          var group_id = selectedGrpObj.val();
+          var groupName = selectedGrpObj.text();
+          var file = document.getElementById("imFile").files[0];
+          kandy.messaging.sendGroupImWithImage(group_id, file, onsendImWithImageToGroupSuccess, onsendImWithImageToGroupFailure);
+      }
+      
+      // callback function for Success sendImWithImageToGroup
+      onsendImWithImageToGroupSuccess = function(message) {
+              var fileName = "";
+              var selectedGrpObj = $("#group-names-send option:selected").val();
+              var groupName = $("#group-names-send option:selected").text();
+              fileName = message.message.content_name;
+              var $chatItem = $('<div class="well text-right">');
+              var $username = $('<h5>').text($('.username').html());
+              var $message = $('<p>').text(fileName);
+              $chatItem.append($username, $message);
+              $('#chat-messages').append($chatItem);
+              $('#imFile').val('');
+          }
+      // callback function for failure sendImWithImageToGroup
+      onsendImWithImageToGroupFailure = function(message) {
+          console.log("onsendImWithImageToGroupFailure");
+      }
+      
+      // Send Audio to Selected Group
+      sendImWithAudioToGroup = function() {
+      
+          var selectedGrpObj = $("#group-names-send option:selected");
+          var group_id = selectedGrpObj.val();
+          var groupName = selectedGrpObj.text();
+          var file = document.getElementById("imFile").files[0];
+          kandy.messaging.sendGroupImWithAudio(group_id, file, onsendImWithAudioToGroupSuccess, onsendImWithAudioToGroupFailure);
+      }
+      
+      // callback function for Success sendImWithAudioToGroup
+      onsendImWithAudioToGroupSuccess = function(message) {
+              var fileName = "";
+              var selectedGrpObj = $("#group-names-send option:selected").val();
+              var groupName = $("#group-names-send option:selected").text();
+              fileName = message.message.content_name;
+              var $chatItem = $('<div class="well text-right">');
+              var $username = $('<h5>').text($('.username').html());
+              var $message = $('<p>').text(fileName);
+      
+              $chatItem.append($username, $message);
+              $('#chat-messages').append($chatItem);
+              $('#imFile').val('');
+          }
+      // callback function for failure sendImWithAudioToGroup
+      onsendImWithAudioToGroupFailure = function(message) {
+      
+          console.log("onsendImWithAudioToGroupFailure");
+      }
+      
+      // Send Video to Selected Group
+      sendImWithVideoToGroup = function() {
+      
+          var selectedGrpObj = $("#group-names-send option:selected");
+          var group_id = selectedGrpObj.val();
+          var groupName = selectedGrpObj.text();
+          var file = document.getElementById("imFile").files[0];
+          kandy.messaging.sendGroupImWithVideo(group_id, file, onsendImWithVideoToGroupSuccess, onsendImWithVideoToGroupFailure);
+      }
+      
+      // callback function for Success sendImWithVideoToGroup
+      onsendImWithVideoToGroupSuccess = function(message) {
+              var fileName = "";
+              var selectedGrpObj = $("#group-names-send option:selected").val();
+              var groupName = $("#group-names-send option:selected").text();
+              fileName = message.message.content_name;
+              var $chatItem = $('<div class="well text-right">');
+              var $username = $('<h5>').text($('.username').html());
+              var $message = $('<p>').text(fileName);
+      
+              $chatItem.append($username, $message);
+              $('#chat-messages').append($chatItem);
+              $('#imFile').val('');
+          }
+      // callback function for failure sendImWithVideoToGroup
+      onsendImWithVideoToGroupFailure = function(message) {
+      
+          console.log("onsendImWithVideoToGroupFailure");
+      }
+      
+      // Leave Participants from the Group on clicking of "Leave Group" Button
+      $("#leaveGroup").on("click", function() {
+          var selectedGrpObj = $("#group-names-send option:selected");
+          var groupId = selectedGrpObj.val();
+          var groupName = selectedGrpObj.text();
+          kandy.messaging.getGroupById(groupId,
+              function(results) {
+                  var LoggedUser = $(".username").text();
+                  var groupOwnerArr = results.owners;
+                  var leaveGroupFlag = false;
+                  for (var i = 0; i < groupOwnerArr.length; i++) {
+                      var groupOwnerName = groupOwnerArr[i].full_user_id;
+                      groupOwnerName = groupOwnerName.split("@")[0];
+                      if (groupOwnerName == LoggedUser) {
+                          leaveGroupFlag = true;
+                      }
+                  }
+                  if (leaveGroupFlag == true) {
+                      alert("Oops !! You seems to be a admin to this Group. Only Participants can able to leave from the Group");
+                  } else {
+                      kandy.messaging.leaveGroup(groupId, onLeaveGroupSuccess, onLeaveGroupFailure);
+                  }
+              },
+              function() {
+                  alert('Something went wrong when we did the search. Try again.');
+              });
+      
+      
+      });
+      
+      // Callback for onLeaveGroupSuccess
+      onLeaveGroupSuccess = function(message) {
+          console.log("onLeaveGroupSuccess");
+      }
+      
+      // Callback for onLeaveGroupFailure
+      onLeaveGroupFailure = function(message) {
+          console.log("onLeaveGroupFailure");
+      }
+      
+      
+          // Event handler for login form button 	
+         $('#login-btn').on('click', function(e) {
+           e.preventDefault();
+           // Values extracted from login form
+           username = $('#username').val();
+           var apiKey = $('#api_key').val();
+           var password = $('#password').val();
+           /** login(domainApiId, userName, password,success,failure)
+               logs in user to Kandy Platform
+               @params <string> domainApiId, <string> userName, <string> password, <function> success/failure
+           */
+           kandy.login(apiKey, username, password,function(msg){
+      		 
+      			 userArray.push(username);
+      			 kandy.getLastSeen(userArray);
+      		 UIState.authenticated();		
+      		fetchAllGroupNames();
+      	 },	
+      		 function(msg){
+      			 UIState.unauthenticated();
+      		 alert('Login Failed!');
+      	 });
+         });
+      // Event handler for logout button
+       $('#logout-btn').on('click', function(e) {
+         e.preventDefault();
+         /** logout(success) logs a user out of the Kandy Platform
+             @param <function> success - Callback handler for
+             successful logout
+         */
+         kandy.logout(function() {
+           userArray.push(username);
+           kandy.getLastSeen(userArray);
+           UIState.unauthenticated();
+         });
+       });
+      
+        /** UIState is a custom piece of code that shuffles between UI states
+          eg:: If user is authenticated, the relevant DOM elements are brought to screen
+          and the rest are hidden. Using this method is NOT recommended!
+      */
+      
+      var username, UIState = {};
+      
+      UIState.authenticated = function() {
+        $('#login-form').addClass('hidden');
+        $('#logged-in').removeClass('hidden');
+        $('.username').text(username);
+      };
+      
+      UIState.unauthenticated = function() {
+        $('#login-form').removeClass('hidden');
+        $('#logged-in').addClass('hidden');
+        $('.username').text('');
+      };
+      
+      UIState.initial = function() {
+        console.log('initial');
+      
+        $audioRingIn[0].pause();
+        $audioRingOut[0].pause();
+      
+        $('#call-form p, #incoming-call p, #call-connected p').text('');
+        $('#incoming-call, #call-connected, .call-terminator, #resume-call-btn').addClass('hidden');
+        $('#call-form, .call-initializer').removeClass('hidden')
+      };
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-8 col-xs-offset-2" id="activity-container">
+          <div id="app-details">
+            <h1 class="h2">
+              Quick Start Sample App: Group Chat Messaging
+            </h1>
+            <p>
+              This sample application demonstrates the code for chatting with another Kandy user
+            </p>
+          </div>
+          
+          <form id="login-form" class="simple_form form-horizontal" novalidate="novalidate" action="" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="kv6rga1TP5mjcTqjKVATAXI0iHLPffs5pwNw3dKjYxb6HtEeQkmQUvKBFxVX1Y6ccz+tdCXuZmDXZynys/pguw==" />
+                    <div class="form-group string required quick_start_login_api_key"><label class="string required col-sm-3 control-label" for="api_key"><abbr title="required">*</abbr> Project API Key</label><div class="col-sm-9"><input id="api_key" name="api_key" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group string required quick_start_login_username"><label class="string required col-sm-3 control-label" for="username"><abbr title="required">*</abbr> Username</label><div class="col-sm-9"><input id="username" name="username" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group password required quick_start_login_password"><label class="password required col-sm-3 control-label" for="password"><abbr title="required">*</abbr> Password</label><div class="col-sm-9"><input id="password" name="password" class="password required form-control" type="password" /></div></div>
+                    
+                    <div class="form-group">
+                      <div class="col-sm-offset-3 col-sm-9">
+                        <input type="submit" name="commit" value="Login" id="login-btn" class="btn btn-success" />
+                        
+                      </div>
+                    </div></form>
+          <div class="hidden" id="logged-in">
+            <hr />
+            <div class="clearfix">
+              <p class="h4 pull-left">
+                <strong>Hello <span class="username"></span></strong>
+              </p>
+              <button class="btn btn-danger pull-right" id="logout-btn">Logout</button>
+            </div>
+            <hr /><div id="chat-container">
+  <h3>
+    Messages
+  </h3>
+  <div id="chat-messages"></div>
+  <hr />
+  <div id="chat-input">
+    <div class="form-group">
+      <label style="float: left; padding-top: 5px;" for="chat-group">Select Group</label><select name="group-names-send" id="group-names-send" class="form-control" style="width: 70%; display: inline-block; float: left; margin-left: 16px;"></select><button name="button" type="submit" class="btn btn-success pull-right inline" id="leaveGroup">Leave Group</button>
+      
+    </div>
+    <div class="form-group">
+      <h4 id="groupHeading">
+        Group Members
+      </h4>
+      <ul class="list-unstyled" id="chatUserdata" style="display:none"></ul>
+      <label class="sendMsgTextNoMember" style="padding-bottom: 20px; font-size: 13px; font-weight: normal; margin-left: 10px; display: none;" for="sendMsgTextNoMember">The group selected has no members added</label>
+      
+    </div>
+    <div class="form-group">
+      <label for="chat-message">Chat Message</label>
+      <textarea name="chat-message" id="chat-message" class="form-control">
+</textarea>
+      <button name="button" type="submit" class="btn btn-success" id="send_msg" style="margin-top: 10px">Send</button>
+      
+    </div>
+    <div class="form-group">
+      <input type="radio" name="chatRadioButton" id="chatFileRadioButton" value="sendFile" /><label style="margin-left: 5px;margin-right: 5px" for="optionsRadios1">Chat File</label>
+      <input type="radio" name="chatRadioButton" id="chatImageRadioButton" value="sendImage" /><label style="margin-left: 5px;margin-right: 5px" for="optionsRadios1">Chat Image</label>
+      <input type="radio" name="chatRadioButton" id="chatAudioRadioButton" value="sendAudio" /><label style="margin-left: 5px;margin-right: 5px" for="optionsRadios1">Chat Audio</label>
+      <input type="radio" name="chatRadioButton" id="chatVideoRadioButton" value="sendVideo" /><label style="margin-left: 5px;margin-right: 5px" for="optionsRadios1">Chat Video</label>
+      
+      <div class="form-group"></div>
+      <label for="chat-message">Chat File</label>
+      <input type="file" name="imFile" id="imFile" class="form-control" />
+      
+    </div>
+    <button name="button" type="submit" class="btn btn-success" id="send_file">Send</button>
+    
+  </div>
+</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Kandy | Collaboration Session Management</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="csrf-param" content="authenticity_token" />
+    <meta name="csrf-token" content="kEQXRl8zUMzk8Kpg7CHOyZx9InvsgExOwJ3m2P1b/k34pG3ZsCn/B7UAh9aSpFNUnXYHfQYT0Rew+b/3nAL94A==" />
+    <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
+    
+    <!--Load Bootstrap CSS (optional)-->
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
+    
+    <!--Load Kandy JS files --><script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
+    
+    <!--Load Pace AJAX Progress Bar (optional)-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.css" />
+    
+    <script type="text/javascript">
+      $(function() {
+       kandy.setup({
+          
+        });
+        var listeners = {
+          'onData': onData,
+          'onUserJoinRequest': onUserJoinRequest,
+          'onUserJoin': onUserJoin,
+          'onJoinApprove': onJoinApprove,
+          'onJoinReject': onJoinReject,
+          'onUserLeave': onUserLeave,
+          'onUserBoot': onUserBoot,
+          'onBoot': onBoot,
+          'onActive': onActive,
+          'onInactive': onInactive,
+          'onTermination': onTermination
+        };
+      
+        // Event handler for onUserJoinRequest event
+        function onUserJoinRequest(notification) {
+          var r = confirm('Press OK to allow ' + notification.full_user_id + ' to join session ' + notification.session_id);
+          if (r == true) {
+            acceptJoinRequest(notification.full_user_id, notification.session_id);
+          } else {
+            rejectJoinRequest(notification.full_user_id, notification.session_id);
+          }
+        }
+      
+        // Event handler for onJoinReject event
+        function onJoinReject(notification) {
+          $('#session-status').text('Participation rejected');
+          loadSessionDetails();
+        }
+      
+        // Event handler for onBoot event
+        function onBoot(notification) {
+          $('#session-status').text('Booted User');
+          loadSessionDetails();
+        }
+      
+        // Get called by onUserJoinRequest Event Handler to accept join request
+          function acceptJoinRequest(full_user_id,sessionId){
+      
+              /** acceptJoinRequest(sessionId, fullUserId, success, failure)
+              Approves a user's request to join a session.
+              @params <string> sessionId, <string> fullUserId, <function> success/failure
+          */
+           kandy.session.acceptJoinRequest(sessionId, full_user_id,
+            function () {
+              loadSessionDetails();
+            },
+            function (msg, code) {
+              $('#session-status').text('Attempt to accept user\'s join request failed (' + code + '): ' + msg);
+            }
+          );
+      
+          }
+      
+          // Get called by onUserJoinRequest Event Handler to reject join request
+          function rejectJoinRequest(full_user_id,sessionId){
+      
+            /** rejectJoinRequest(sessionId, fullUserId, rejectReason, success, failure)
+              Rejects a user’s request to join a session.
+              @params <string> sessionId, <string> fullUserId, <string> rejectReason, <function> success/failure
+          */
+           kandy.session.rejectJoinRequest(sessionId, full_user_id, 'enter reject reason here',
+            function () {
+              loadSessionDetails();
+            },
+            function (msg, code) {
+              $('#session-status').text('Attempt to reject user\'s join request failed (' + code + '): ' + msg);
+            }
+          );
+      
+          }
+        // Event handler for accept button
+      $('#participants-list').on('click', '.participant-accept-btn', function() {
+        sessionId = sessions[$('#sessions-select').val()].session_id;
+      
+        /** acceptJoinRequest(sessionId, fullUserId, success, failure)
+            Approves a user's request to join a session.
+            @params <string> sessionId, <string> fullUserId, <function> success/failure
+        */
+        kandy.session.acceptJoinRequest(sessionId, $(this).data('user-id'),
+          function () {
+            loadSessionDetails();
+          },
+          function (msg, code) {
+            $('#session-status').text('Attempt to accept user\'s join request failed (' + code + '): ' + msg);
+          }
+        );
+      });
+      
+      // Event handler for reject button
+      $('#participants-list').on('click', '.participant-reject-btn', function() {
+        var sessionId = sessions[$('#sessions-select').val()].session_id;
+      
+        /** rejectJoinRequest(sessionId, fullUserId, rejectReason, success, failure)
+            Rejects a user’s request to join a session.
+            @params <string> sessionId, <string> fullUserId, <string> rejectReason, <function> success/failure
+        */
+        kandy.session.rejectJoinRequest(sessionId, $(this).data('user-id'), 'enter reject reason here',
+          function () {
+            loadSessionDetails();
+          },
+          function (msg, code) {
+            $('#session-status').text('Attempt to reject user\'s join request failed (' + code + '): ' + msg);
+          }
+        );
+      });
+      
+      // Event handler for boot button
+      $('#participants-list').on('click', '.participant-boot-btn', function() {
+        var sessionId = sessions[$('#sessions-select').val()].session_id;
+      
+        /** bootUser(sessionId, fullUserId, bootReason, success, failure)
+            Removes a user from a session.
+            @params <string> sessionId, <string> fullUserId, <string> bootReason, <function> success/failure
+        */
+        kandy.session.bootUser( sessions[$('#sessions-select').val()].session_id, $(this).data('user-id'), 'boot reason',
+          function () {
+            $('#session-status').text('User Booted');
+            loadSessionDetails();
+          },
+          function (msg, code) {
+            $('#session-status').text('Attempt to accept user\'s join request failed (' + code + '): ' + msg);
+          }
+        );
+      });
+      
+      // Event handler for session create button
+      $('#session-create-btn').on('click', function(e) {
+          e.preventDefault();
+      
+          /** create(sessionConfig, success, failure)
+              Creates a new session. The creating user is the administrator.
+              @params <object> sessionConfig, <function> success/failure
+          */
+          kandy.session.create(
+          { //config
+            session_type: $('#create_session_type').val(),
+            session_name: $('#create_session_name').val(),
+            session_description: $('#create_session_description').val(),
+            user_nickname: $('#create_user_nickname').val(),
+            user_first_name: $('#create_user_first_name').val(),
+            user_last_name: $('#create_user_last_name').val(),
+            user_phone_number: $('#create_user_phone_number').val(),
+            user_email: $('#create_user_email').val(),
+            expiry_timestamp: Date.parse($('#create_session_expiration').val())
+          },
+          function (result) {  // success
+            getOpenSessions();
+            $('#session-status').text('Session Created');
+            UIState.sessionsavailable();
+          },
+          function (msg, code) {  // failure
+            $('#session-status').text('Error creating session (' + code + '): ' + msg);
+          }
+        );
+      });
+      
+      // Event handler for activate button
+      $('#session-activate-btn').on('click', function() {
+      
+        /** activate(sessionId, success, failure)
+            Activates (or reactivates) a session. When a session is active, participants may send data.
+            @params <string> sessionId, <function> success/failure
+        */
+        kandy.session.activate( sessions[$('#sessions-select').val()].session_id,
+          function () {
+            $('#session-status').text('Session Started');
+            loadSessionDetails();
+          },
+          function (msg, code) {
+            $('#session-status').text('Attempt to star a session failed (' + code + '): ' + msg);
+          }
+        );
+      });
+      
+      // Event handler for deactivate button
+      $('#session-deactivate-btn').on('click', function() {
+      
+        /** inactivate(sessionId, success, failure)
+            Inactivates a session. When a session is inactive, participants may not send data.
+            @params <string> sessionId, <string> fullUserId, <function> success/failure
+        */
+        kandy.session.inactivate( sessions[$('#sessions-select').val()].session_id,
+          function () {
+      		// success callback once the session is inactive. 
+          },
+          function (msg, code) {
+            $('#session-status').text('Attempt to stop a session failed (' + code + '): ' + msg);
+          }
+        );
+      });
+      
+      
+        var username;
+      var sessions = [];
+      var sessionListeners = [];
+      
+      // Event handler for onData event
+      function onData(message) {
+        $('#session-status').text('Message Received: ' + JSON.stringify(message));
+      }
+      // Event handler for onUserJoin event
+      function onUserJoin(notification) {
+        $('#session-status').text('User Joined');
+        loadSessionDetails();
+      }
+      // Event handler for onUserLeave event
+      function onUserLeave(notification) {
+        $('#session-status').text("User left");
+        $('#session-actions').addClass('hidden');
+        loadSessionDetails();
+      }
+      // Event handler for onUserBoot event
+      function onUserBoot(notification) {
+        $('#session-status').text("Session User Boot");
+        $('#session-actions').addClass('hidden');
+        loadSessionDetails();
+      }
+      // Event handler for onActive event
+      function onActive(notification) {
+        $('#session-status').text('Session activated');
+        loadSessionDetails();
+      }
+      // Event handler for onInactive event
+      function onInactive(notification) {	
+        $('#session-status').text('Session deactivated');
+        loadSessionDetails();
+      }
+      // Event handler for onTermination event
+      function onTermination(notification) {
+        $('#session-status').text('Session Terminated');
+      
+        var deletedSessionId = notification.session_id;
+        var indexOfSessionToDelete = sessions.map(function(sess) {
+          return sess.session_id;
+        }).indexOf(deletedSessionId);
+      
+        if(indexOfSessionToDelete > -1) {
+          sessions.splice(indexOfSessionToDelete, 1);
+        }
+        loadSessionList(sessions, false);
+      }
+      
+      // Event handler for onJoinApprove event
+      function onJoinApprove(notification) {
+        $('#session-status').text("Participation approved");
+        loadSessionDetails();
+      }
+      
+      // Function to load sessions list and append options to #sessions-select
+      function loadSessionList(sessionList, alertWhenNone) {
+        $('#sessions-select').empty();
+        sessions = sessionList;
+        if (sessionList.length > 0) {
+          var i = 0;
+      
+          sessionList.forEach(function(session) {
+            var $option = $('<option>').val(i).text(session.session_id);
+            $('#sessions-select').append($option);
+            i++;
+          });
+      
+          loadSessionDetails();
+        } else {
+          UIState.sessionsunavailable();
+          sessions = [];
+          clearSessionDetails();
+      
+          if (alertWhenNone === undefined || alertWhenNone === null || alertWhenNone) {
+            $('#session-status').text('No sessions.');
+          }
+        }
+      }
+      
+      // Function to get sessions that are created
+      function getOpenSessions(alertWhenNone) {
+      
+        /** getOpenSessions(success, failure)
+            Gets a list of all open sessions.
+            @params <function> success/failure
+        */
+        kandy.session.getOpenSessions(
+          function (result) {
+            loadSessionList(result.sessions, alertWhenNone);
+          },
+          function (msg, code) {
+            $('#session-status').text('Error getting session info(' + code + '): ' + msg);
+            UIState.sessionsunavailable();
+          }
+        );
+      }
+      
+      // Function to update session details
+      function updateSessionDetails(sess_id, sessionDetails) {
+        var sess = null;
+        var date = new Date();
+      
+        if(sess_id == sessionDetails.session_id) {
+      
+          // update session details in sessions array
+          var sessionIndex = sessions.map(function(session) {
+            return session.session_id;
+          }).indexOf(sess_id);
+          sessions[sessionIndex] = sessionDetails;
+          sess = sessionDetails;
+      
+          $('#session-type').text(sess.session_type);
+          $('#session-name').text(sess.session_name);
+          $('#session-status-open').text(sess.session_status);
+          $('#session-admin').text(sess.admin_full_user_id);
+          $('#session-id').text(sess.session_id);
+          $('#session-domain').text(sess.domain_name);
+      
+          if (sess.session_status != 'active') {
+            UIState.sessionactivatebutton();
+          } else {
+            UIState.sessiondeactivatebutton();
+          }
+      
+          date.setTime(sess.creation_timestamp);
+          $('#session-created').text(date.toDateString());
+      
+          date.setTime(sess.expiry_timestamp);
+          $('#session-expires').text(date.toDateString());
+        }
+        return sess;
+      }
+      
+      // Function to clear session details
+      function clearSessionDetails() {
+        if (sessions.length) {
+          $('#session-details li span').empty();
+        }
+      }
+      
+      	  function getLimitedUserDetails(user_access_token,cb) { 
+      
+               kandy.getLimitedUserDetails(user_access_token, function (results) {
+                if(typeof cb === 'function'){
+                  cb(results);
+                }
+                
+               }, function () {
+                console.log('Failed to get details: ', user_access_token);
+                
+               });
+            }
+      // Event handler for login button
+            $('#login-btn').on('click', function(e) {
+              e.preventDefault();
+            
+              // Values extracted from login form
+              username = $('#username').val();
+              var apiKey = $('#api_key').val();
+              var password = $('#password').val();
+            
+              /** login(domainApiId, userName, password, success, failure )
+                  logs in user to Kandy Platform
+                  @params <string> domainApiId, <string> userName, <string> password
+              */
+              kandy.login(apiKey, username, password, function(results) {
+                  getLimitedUserDetails(results.user_access_token,function(results){
+                      $('#username').text(results.full_user_id);
+                      UIState.authenticated();
+                      getOpenSessions();
+                  });
+                },
+                function (msg, code) {
+                  alert('Error loggin in:(' + code + '): ' + msg);
+                }
+              );
+            });
+      
+      $('#logout-btn').on('click', function(e) {
+        e.preventDefault();
+      
+        /** logout(success, failure)
+            logs out user from Kandy Platform
+            @params <function> success/failure
+        */
+        kandy.logout(function(){
+            UIState.unauthenticated();
+            location.reload();
+        });
+      });
+      
+      // Event handler to load session details on change option
+      $('#sessions-select').change(function () {
+        loadSessionDetails();
+      });
+      
+      // Event handler to send data to session participants
+      $('#send-session-data-btn').on('click', function() {
+      
+        /** sendData(sessionId, data, success, failure, destinationFullUserId)
+            Sends data to all other participants.
+            @params <string> sessionId, <object> data, <function> success/failure, <string> destinationFullUserId
+        */
+        kandy.session.sendData(
+          sessions[$('#sessions-select').val()].session_id,
+          $('#send-session-data').val(),
+          function() {
+            $('#session-status').text('Data sent');
+            $('#send-session-data').val('');
+          },
+          function(msg, code) {
+            $('#session-status').text('Error sending Data (' + code + '): ' + msg);
+          }
+        );
+      });
+      
+      
+        // Event handler for terminate button
+        $('#session-terminate-btn').on('click', function () {
+          var sessionId = sessions[$('#sessions-select').val()].session_id;
+      
+          /** terminate(sessionId, success, failure)
+           Terminates (permanently close) a session.
+           @params <string> sessionId, <function> success/failure
+          */
+          kandy.session.terminate(sessionId,
+           function () {
+            $('#session-status').text('Session terminated');
+            getOpenSessions();
+            UIState.sessionsavailable();
+           },
+           function (msg, code) {
+            $('#session-status').text('Error deleting session (' + code + '): ' + msg);
+           }
+          );
+          });
+      
+        // Function to load session details
+        function loadSessionDetails() {
+          var sessionId = sessions[$('#sessions-select').val()].session_id;
+      
+          UIState.sessionadmin();
+      
+          /** getInfoById(sessionId, success, failure) : Void
+              Gets session details by session ID.
+              @params <string> sessionId, <function> success/failure
+          */
+          kandy.session.getInfoById(sessionId,
+            function (result) {
+      
+              // update session details
+              var sess = updateSessionDetails(sessionId, result.session);
+              var users = result.session.participants;
+              var username = $('#username').text();
+      
+              $('#participants-list').empty();
+      
+              if (users.length < 1) {
+                alert('You have no participants in this session!');
+              } else {
+                users.forEach(function(user) {
+                  var $participantButtonReject, $participantButtonAccept, $participantButtonBoot;
+                  var $li = $('<li>');
+      
+                  if (user.full_user_id === username) {
+                    $participantText = 'me';
+                  } else {
+                    $participantText = user.full_user_id;
+                  }
+      
+                  $participantText +=  '(' + user.type +  (user.type == 'admin' ? '' : ('/' + user.status )) + ')  ';
+                  $li.append($participantText);
+      
+                  //Build Participant List based on other participants
+                  if (user.status === 'pending') {
+                    $participantButtonAccept = $('<button>').addClass('participant-accept-btn btn btn-success').text('Accept').attr('data-user-id', user.full_user_id);
+                    var $participantButtonReject = $('<button>').addClass('participant-reject-btn btn btn-danger').text('Reject').attr('data-user-id', user.full_user_id);;
+                    $li.append($participantButtonAccept, $participantButtonReject);
+                  } else if (user.status === 'approved' && user.type !== 'admin') {
+                    var $participantButtonBoot = $('<button>').addClass('participant-boot-btn btn btn-danger').text('Boot').addClass('btn btn-danger').attr('data-user-id', user.full_user_id);;
+                    $li.append($participantButtonBoot);
+                  }
+      
+                  $('#participants-list').append($li);
+      
+                  if(sessionListeners.indexOf(sess.session_id) < 0) {
+      
+                    /** setListeners(sessionId, success, failure)
+                        Registers listener functions (called when session-related notifications are received).
+                        @params <string> sessionId, <object> sessionId
+                    */
+                    kandy.session.setListeners(sess.session_id, listeners);
+                    sessionListeners.push(sess.session_id);
+                  }
+                });
+              }
+            },
+            function (msg, code) {
+              $('#session-status').text('Error getting participant information for this session.');
+            }
+          );
+        }
+      
+        // Event handler for Get Open Sessions By Type Button
+        $('#open-sessions-by-type-btn').on('click', function() {
+      
+          /** getOpenSessionsByType(success, failure)
+              Gets a list of open sessions having a specific session type.
+              @params <function> success/failure
+          */
+          kandy.session.getOpenSessionsByType(
+            $('#get_open_sessions_by_type').val(),
+            function (result) {
+              loadSessionList(result.sessions);
+            },
+            function (msg, code) {
+              $('#session-status').text('Error getting session info(' + code + '): ' + msg);
+            }
+          );
+        });
+      
+        // Event handler for Get Open Sessions By ID Button
+        $('#session-info-by-id-btn').on('click', function() {
+      
+          /** getInfoById(sessionId, success, failure) : Void
+              Gets session details by session ID.
+              @params <string> sessionId
+          */
+          kandy.session.getInfoById(
+            $('#get_session_info_by_id').val(),
+            function (result) {
+              $('#session-status').text('Session info: ' + JSON.stringify(result));
+            },
+            function (msg, code) {
+              $('#session-status').text('Error getting session info(' + code + '): ' + msg);
+            }
+          );
+        });
+      
+        // Event handler for Get Open Sessions By name Button
+        $('#session-info-by-name-btn').on('click', function() {
+      
+          /** getInfoByName(sessionName, success, failure)
+              Gets session details by session ID
+              @params <String> sessionName, <function> success/failure
+          */
+          kandy.session.getInfoByName(
+            $('#get_session_info_by_name').val(),
+            function (result) {
+              $('#session-status').text('Session info: ' + JSON.stringify(result));
+            },
+            function (msg, code) {
+              $('#session-status').text('Error getting session info(' + code + '): ' + msg);
+            }
+          );
+        });
+      
+        // Event handler for Get Open Sessions Button
+        $('#open-sessions-btn').on('click', function() {
+          getOpenSessions();
+          UIState.sessionsavailable();
+        });
+      
+        // Event handler for Get Open Sessions Created By User Button
+        $('#open-self-sessions-btn').on('click', function() {
+      
+          /** getOpenSessionsCreatedByUser(success, failure)
+              Gets a list of open sessions created by this user.
+              @params <function> success/failure
+          */
+          kandy.session.getOpenSessionsCreatedByUser(
+            function (result) {
+              loadSessionList(result.sessions);
+            },
+            function (msg, code) {
+              $('#session-status').text('Error getting session info(' + code + '): ' + msg);
+            }
+          );
+        });
+      
+        /** UIState is a custom piece of code that shuffles between UI states
+          eg:: If user is authenticated, the relevant DOM elements are brought to screen
+          and the rest are hidden. Using this method is NOT recommended!
+      */
+      
+      var username, UIState = {};
+      
+      UIState.authenticated = function() {
+        $('#login-form').addClass('hidden');
+        $('#logged-in').removeClass('hidden');
+        $('.username').text(username);
+      };
+      
+      UIState.unauthenticated = function() {
+        $('#login-form').removeClass('hidden');
+        $('#logged-in').addClass('hidden');
+        $('.username').text('');
+      };
+      
+      UIState.initial = function() {
+        console.log('initial');
+      
+        $audioRingIn[0].pause();
+        $audioRingOut[0].pause();
+      
+        $('#call-form p, #incoming-call p, #call-connected p').text('');
+        $('#incoming-call, #call-connected, .call-terminator, #resume-call-btn').addClass('hidden');
+        $('#call-form, .call-initializer').removeClass('hidden')
+      };
+      
+        UIState.sessionsavailable = function() {
+          $('#sessions-available').removeClass('hidden');
+          $('#sessions-unavailable').addClass('hidden');
+          $('#session-actions').removeClass('hidden');
+          $('#session-join').removeClass('hidden');
+          $('#send-data').addClass('hidden');
+        }
+      
+        UIState.sessionsunavailable = function() {
+          $('#sessions-available').addClass('hidden');
+          $('#sessions-unavailable').removeClass('hidden');
+          $('#session-actions').addClass('hidden');
+        }
+      
+        UIState.sessionadmin = function() {
+          $('#session-actions').removeClass('hidden');
+          $('.admin').removeClass('hidden');
+          $('#session-join').addClass('hidden');
+        }
+      
+        UIState.sessionparticipant = function() {
+          $('#session-actions').removeClass('hidden');
+          $('#sessions-available').removeClass('hidden');
+          $('.admin').addClass('hidden');
+          $('.participant').removeClass('hidden');
+          $('#session-join').addClass('hidden');
+        }
+      
+        UIState.sessionpendingparticipation = function() {
+          $('#session-actions').removeClass('hidden');
+          $('.pending-participation').removeClass('hidden');
+          $('.admin').addClass('hidden');
+          $('#sessions-available').removeClass('hidden');
+          $('#session-join').addClass('hidden');
+        }
+      
+        UIState.sessionnonparticipant = function() {
+          $('#session-actions').removeClass('hidden');
+          $('#sessions-available').removeClass('hidden');
+          $('.admin').addClass('hidden');
+          $('.participant').removeClass('hidden');
+          $('#session-join').addClass('hidden');
+        }
+      
+        UIState.sessionactivatebutton = function() {
+          $('#session-activate').hide();
+          $('#session-inactivate').show();
+        }
+      
+        UIState.sessiondeactivatebutton = function() {
+          $('#session-activate').hide();
+          $('#session-inactivate').show();
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-8 col-xs-offset-2" id="activity-container">
+          <div id="app-details">
+            <h1 class="h2">
+              Quick Start Sample App: Collaboration Session Management
+            </h1>
+            <p>
+              This sample application demonstrates Collaboration Session Management
+            </p>
+          </div>
+          
+          <form id="login-form" class="simple_form form-horizontal" novalidate="novalidate" action="" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="mOc0WmhGcZjtYyGApVyKf9XqXU68g/OPUb4wBeKzAvDwB07Fh1zeU7yTDDbb2Rfi1OF4SFYQbtYh2mkqg+oBXQ==" />
+                    <div class="form-group string required quick_start_login_api_key"><label class="string required col-sm-3 control-label" for="api_key"><abbr title="required">*</abbr> Project API Key</label><div class="col-sm-9"><input id="api_key" name="api_key" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group string required quick_start_login_username"><label class="string required col-sm-3 control-label" for="username"><abbr title="required">*</abbr> Username</label><div class="col-sm-9"><input id="username" name="username" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group password required quick_start_login_password"><label class="password required col-sm-3 control-label" for="password"><abbr title="required">*</abbr> Password</label><div class="col-sm-9"><input id="password" name="password" class="password required form-control" type="password" /></div></div>
+                    
+                    <div class="form-group">
+                      <div class="col-sm-offset-3 col-sm-9">
+                        <input type="submit" name="commit" value="Login" id="login-btn" class="btn btn-success" />
+                        
+                      </div>
+                    </div></form>
+          <div class="hidden" id="logged-in">
+            <hr />
+            <div class="clearfix">
+              <p class="h4 pull-left">
+                <strong>Hello <span class="username"></span></strong>
+              </p>
+              <button class="btn btn-danger pull-right" id="logout-btn">Logout</button>
+            </div>
+            <hr />
+            <p>
+              Status:<span id="session-status"></span>
+            </p>
+            <hr />
+            <h3>
+              Session Loading & Selection:
+            </h3>
+            <hr />
+            <div class="btn-toolbar">
+              <button class="btn btn-default" id="open-sessions-btn">Get Open Sessions</button><button class="btn btn-default" id="open-self-sessions-btn">Get Your Open Sessions</button>
+            </div>
+            <hr />
+            <div class="form-group">
+              <label for="get_open_sessions_by_type">Get Open Session By Type</label>
+              <input type="text" name="get_open_sessions_by_type" id="get_open_sessions_by_type" class="form-control" placeholder="Enter Session Type" />
+              
+            </div>
+            <button class="btn btn-default" id="open-sessions-by-type-btn">Get Open Sessions By Type</button>
+            <hr />
+            <div class="form-group">
+              <label for="get_session_info_by_id">Get Sessions Info By ID</label>
+              <input type="text" name="get_session_info_by_id" id="get_session_info_by_id" class="form-control" placeholder="Enter Session ID" />
+              
+            </div>
+            <button class="btn btn-default" id="session-info-by-id-btn">Get Open Sessions By ID</button>
+            <hr />
+            <div class="form-group">
+              <label for="get_session_info_by_name">Get Sessions Info By Name</label>
+              <input type="text" name="get_session_info_by_name" id="get_session_info_by_name" class="form-control" placeholder="Enter Session Name" />
+              
+            </div>
+            <button class="btn btn-default" id="session-info-by-name-btn">Get Open Sessions By Name</button>
+            <hr />
+            <div id="sessions-available">
+              <div class="form-group">
+                <label for="sessions-select">Select Session</label>
+                <select name="sessions-select" id="sessions-select" class="form-control"></select>
+                
+              </div>
+              <hr />
+              <h4>
+                Session Details
+              </h4>
+              <ul class="list-unstyled" id="session-details">
+                <li>
+                  Type:<span id="session-type"></span>
+                </li>
+                <li>
+                  Name:<span id="session-name"></span>
+                </li>
+                <li>
+                  Status:<span id="session-status-open"></span>
+                </li>
+                <li>
+                  Created:<span id="session-created"></span>
+                </li>
+                <li>
+                  Expires:<span id="session-expires"></span>
+                </li>
+                <li>
+                  Admin:<span id="session-admin"></span>
+                </li>
+                <li>
+                  ID: <span id="session-id"></span>
+                </li>
+                <li>
+                  Domain: <span id="session-domain"></span>
+                </li>
+                <hr />
+              </ul>
+              <h4>
+                Participants
+              </h4>
+              <ul class="list-unstyled" id="participants-list"></ul>
+              <hr />
+            </div>
+            <div class="hidden" id="session-actions">
+              <div class="btn-toolbar">
+                <button class="btn btn-danger" id="session-terminate-btn">Terminate</button><button class="btn btn-success" id="session-activate-btn">Activate</button><button class="btn btn-warning" id="session-deactivate-btn">Deactivate</button>
+              </div>
+              <hr />
+            </div>
+            <div class="hidden" id="send-data">
+              <div class="form-group">
+                <label for="send-session-data">Data To Send</label>
+                <input type="text" name="send-session-data" id="send-session-data" class="form-control" />
+                
+              </div>
+              <button class="btn btn-success" id="send-session-data-btn">Send Data</button>
+            </div>
+            <div id="session-create">
+              <h3>
+                Session Creation:
+              </h3>
+              <form id="session-create-form" action="" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="jKMgnB6krJPsjMOw6voLKH7yidTlOCmubLfZFjZWFqTkQ1oD8b4DWL187gaUf5a1f/ms0g+rtPcc04A5Vw8VCQ==" />
+                
+                <div class="form-group">
+                  <label for="create_session_type">Session Type</label>
+                  <input type="text" name="create_session_type" id="create_session_type" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="create_session_name">Session Name</label>
+                  <input type="text" name="create_session_name" id="create_session_name" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="create_session_description">Session Description</label>
+                  <input type="text" name="create_session_description" id="create_session_description" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="create_user_nickname">Session Nickname</label>
+                  <input type="text" name="create_user_nickname" id="create_user_nickname" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="create_user_first_name">First Name</label>
+                  <input type="text" name="create_user_first_name" id="create_user_first_name" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="create_user_last_name">Last Name</label>
+                  <input type="text" name="create_user_last_name" id="create_user_last_name" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="create_user_phone_number">Phone Number</label>
+                  <input type="text" name="create_user_phone_number" id="create_user_phone_number" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="create_user_email">Email</label>
+                  <input type="text" name="create_user_email" id="create_user_email" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="create_session_expiration">Session Expiration</label>
+                  <input type="text" name="create_session_expiration" id="create_session_expiration" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <button class="btn btn-success" id="session-create-btn">Create Session</button>
+                </div></form>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

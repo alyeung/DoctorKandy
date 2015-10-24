@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Kandy | Register</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="csrf-param" content="authenticity_token" />
+    <meta name="csrf-token" content="b/H5Kbn4SHLJRh37CVnG5ldTw/ZX9WPuAkKKc3kcUnEHEYO2VuLnuZi2ME133Ft7Vljm8L1m/rdyJtNcGEVR3A==" />
+    <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
+    
+    <!--Load Bootstrap CSS (optional)-->
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
+    
+    <!--Load Kandy JS files --><script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
+    
+    <!--Load Pace AJAX Progress Bar (optional)-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.css" />
+    
+    <script type="text/javascript">
+      $(function() {
+        var spidrConfig = null;
+        var setupDone = false;
+        var countryCode = null;
+        kandy.setup({
+        
+        });
+        function setup() {
+          // you must call setup and pass domain access token
+          kandy.registration.setup({
+              'domainAccessToken': $('#domain_access_token').val()
+          });
+          setupDone = true;
+      
+          kandy.registration.retrieveCountryCode(
+            function(result) {
+                alert('Country Code: ' + JSON.stringify(result));
+                $('#country_code').val(result.countryNameShort);
+            },
+            function(message) {
+                console.log('Error getting country code: ' + message);
+            }
+          );
+        }
+      
+       $('#validation-code-btn').on('click', function(e) {
+          e.preventDefault();
+          if (!setupDone) setup();
+          kandy.registration.sendValidationCode(
+            $('#phone_number').val(),
+            $('#country_code').val(),
+            function() {
+              alert('validation code sent');
+            },
+            function() {
+              alert('sending validation code failed');
+            }
+          );
+        });
+      
+        $('#register-btn').on('click', function(e) {
+          e.preventDefault();
+          if (!setupDone) setup();
+          kandy.registration.register(
+          {
+            'userPhoneNumber': $('#phone_number').val(),
+            'userCountryCode': $('#country_code').val(),
+            'validationCode': $('#validation_code').val(),
+            'deviceNativeId': $('#deviceNativeId').val()
+          },
+          function (result) {
+            alert('Registered: user_id=' + result.user_id +
+              ' full_user_id=' + result.full_user_id+
+              ' domain_name=' + result.domain_name +
+              ' user_access_token=' + result.user_access_token +
+              ' device_id=' + result.device_id
+            );
+          },
+          function (msg) {
+            alert('Call to register() failed: ' + msg);
+          });
+        });
+      
+        $('#get-configuration-btn').on('click', function(e) {
+          e.preventDefault();
+          if (!setupDone) setup();
+      
+          kandy.registration.getConfiguration(
+          {
+            'domainApiKey': '680c942bdd8f4e99a85719b38c42028b',
+            'domainApiSecret': '3451aa80f6be41539ef7d7bae937384a'
+          },
+          function (response) {
+            alert('Configuration: domainName= ' + response.domainName +
+                  ' domainAccessToken= ' + response.domainAccessToken +
+                  ' spidrConfiguration= ' + JSON.stringify(response.spidrConfiguration)
+                  );
+      
+            spidrConfig = response.spidrConfiguration
+          },
+          function (msg) {
+            alert('Call to getConfiguration() failed: ' + msg);
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-8 col-xs-offset-2" id="activity-container">
+          <h3>
+            Kandy Quick Starts: Register
+          </h3>
+          <form id="register-form" action="" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="c8eam+pX39WUR9ZULH14LZweVAB/T9N2OF9+jfqTtPQbJ+AEBU1wHsW3++JS+OWwnRVxBpXcTi9IOyeim8q3WQ==" />
+          
+          <div class="form-group">
+            <label for="domain_access_token">Domain Access Token</label>
+            <input type="text" name="domain_access_token" id="domain_access_token" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="phone_number">Phone Number</label>
+            <input type="text" name="phone_number" id="phone_number" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="country_code">Country Code</label>
+            <input type="text" name="country_code" id="country_code" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="validation_code">Validation Code</label>
+            <input type="text" name="validation_code" id="validation_code" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="deviceNativeId">Device Native Id</label>
+            <input type="text" name="deviceNativeId" id="deviceNativeId" class="form-control" />
+          </div>
+          <div class="form-group btn-toolbar">
+            <button class="btn btn-success" id="validation-code-btn">Send Validation Code</button><button class="btn btn-success" id="register-btn">Register</button><button class="btn btn-success" id="get-configuration-btn">Get Configuration</button>
+          </div></form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

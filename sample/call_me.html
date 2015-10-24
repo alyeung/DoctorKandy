@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Kandy | Call Me</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="csrf-param" content="authenticity_token" />
+    <meta name="csrf-token" content="HvyvzjqICyImOTYtcPtDfKDD+/HXWASaVQqPJTK63c12HNVR1ZKk6XfJG5sOft7hocje9z3LmcMlbtYKU+PeYA==" />
+    <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
+    
+    <!--Load Bootstrap CSS (optional)-->
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
+    
+    <!--Load Kandy JS files --><script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
+    
+    <!--Load Pace AJAX Progress Bar (optional)-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        var callId;
+      
+        kandy.setup({
+          
+          remoteVideoContainer: $('#video-holder'),
+          listeners: {
+            callinitiated: onCallInitated,
+            oncall: onCall,
+            callrejected: onCallRejected,
+            callinitiatefailed: onCallInitiateFailed,
+            callended: onCallEnded
+          }
+        });
+      
+        $('#call-initiate-btn').on('click', function() {
+          kandy.call.makeAnonymousCall('anon_customersupport@concierge.com','Kandy Support', null, true);
+          $('#call-initiate-btn').addClass('hidden');
+          $('#call-terminate-btn').removeClass('hidden');
+        });
+      
+        $('#call-terminate-btn').on('click', function() {
+          var $text = $('<i>').text('Contact Kandy Support');
+      
+          kandy.call.endCall(callId);
+          kandy.logout();
+      
+          $('#call-status').html($text);
+        });
+      
+        // Event handler for callinitated event
+        function onCallInitated(call) {
+          callId = call.getId();
+          this.intervalId = setInterval(function() {
+            ringCheck(false);
+          }, 25000);
+      
+          $('#call-status').text('Calling');
+        }
+      
+        // Function to handle situation when experts aren't available.
+        function ringCheck(check) {
+          var $text = 'Our experts are currently not available. Please try again later or email us:';
+          var $link = $('<a>').attr({
+            'href': 'mailto:support@kandy.io?Subject=Help',
+            'target': '_top'
+          }).text('support@kandy.io');
+      
+          check ? checkIntervalId() : clearInterval(this.intervalId);
+          kandy.call.endCall();
+          kandy.logout();
+      
+          $('#call-initiate-btn').removeClass('hidden');
+          $('#call-terminate-btn').addClass('hidden');
+          $('.video-container').addClass('hidden');
+          $('#call-status').empty().append($text, $link);
+        }
+      
+        // Function to check the existence of intervalId
+        function checkIntervalId(id) {
+          callId = null;
+          if (id) {
+            clearInterval(id);
+          }
+        }
+      
+        // Event handler for oncall event
+        function onCall(call) {
+          checkIntervalId(this.intervalId);
+          $('#call-status').text('Connected');
+          $('.video-container').removeClass('hidden');
+        }
+      
+        // Event handler for callrejected event
+        function onCallRejected() {
+          ringCheck(true);
+        }
+      
+        // Event handler for callinitiatefailed event
+        function onCallInitiateFailed() {
+          ringCheck(true);
+        }
+      
+        // Event handler for callended event
+        function onCallEnded() {
+          ringCheck(true);
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-8 col-xs-offset-2" id="activity-container">
+          <style type="text/css">
+            .kandy-widget {
+              width: 200px;
+              padding: 15px;
+              margin: 15px;
+              border-radius: 15px;
+            }
+            
+            .btn {
+              border: 0;
+              width: 75%;
+              color: #fff;
+            }
+            
+            .btn-purple {
+              background: #ad599f;
+            }
+          </style>
+          <div class="well well-sm kandy-widget">
+            <div id="kandy-logo">
+              <img src="http://dev.kandy.io:3000/assets/widgets/kandy_widget_logo-866b1c41707cb4790c15bab270a994af.png" alt="Kandy widget logo" />
+            </div>
+            <div class="text-center" id="call-status" style="padding: 15px 0 0">
+              <p>
+                Contact Kandy Support
+              </p>
+            </div>
+            <hr />
+            <div class="text-center btn-toolbar">
+              <button class="btn btn-purple" id="call-initiate-btn">Call</button><button class="btn btn-warning hidden" id="call-terminate-btn">Hang Up</button>
+            </div>
+            <div class="video-container hidden"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

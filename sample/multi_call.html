@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Kandy | Multiple Calls</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="csrf-param" content="authenticity_token" />
+    <meta name="csrf-token" content="RyeEWJfvpiFMBJFafmz6qtnmxNWpt2N9dw4C0lTtCOkvx/7HePUJ6h30vOwA6Wc32O3h00Mk/iQHalv9NbQLRA==" />
+    <link rel="shortcut icon" type="image/x-icon" href="http://dev.kandy.io:3000/assets/favicon-3da99d2536c9fa570157780f5d5f6f0d.ico" />
+    
+    <!--Load Bootstrap CSS (optional)-->
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" media="screen" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css" />
+    
+    <!--Load Kandy JS files --><script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script src="https://kandy-portal.s3.amazonaws.com/public/javascript/kandy/2.3.0/kandy.js"></script>
+    
+    <!--Load Pace AJAX Progress Bar (optional)-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.css" />
+    
+    <script type="text/javascript">
+      $(function() {
+        var callId, calls = [];
+      
+        // Create audio objects to play incoming calls and outgoing calls sound
+      var $audioRingIn = $('<audio>', { loop: 'loop', id: 'ring-in' });
+      var $audioRingOut = $('<audio>', { loop: 'loop', id: 'ring-out' });
+      
+      // Load audio source to DOM to indicate call events
+      var audioSource = {
+        ringIn: [
+          { src: 'https://kandy-portal.s3.amazonaws.com/public/sounds/ringin.mp3', type: 'audio/mp3' },
+          { src: 'https://kandy-portal.s3.amazonaws.com/public/sounds/ringin.ogg', type: 'audio/ogg' }
+          ],
+        ringOut: [
+          { src: 'https://kandy-portal.s3.amazonaws.com/public/sounds/ringout.mp3', type: 'audio/mp3' },
+          { src: 'https://kandy-portal.s3.amazonaws.com/public/sounds/ringout.ogg', type: 'audio/ogg' }]
+      };
+      
+      audioSource.ringIn.forEach(function(entry) {
+        var $source = $('<source>').attr('src', entry.src);
+        $audioRingIn.append($source);
+      });
+      
+      audioSource.ringOut.forEach(function(entry) {
+        var $source = $('<source>').attr('src', entry.src);
+        $audioRingOut.append($source);
+      });
+      
+        /** setup(config) intializes kandy
+          @param <object> config
+        */
+        kandy.setup({
+          
+          remoteVideoContainer: $('#incoming-video')[0],
+          localVideoContainer: $('#outgoing-video')[0],
+      
+          // listeners registers events to handlers
+          // You can handle all Kandy Events by registering it here
+          listeners: {
+            callincoming: onIncomingCall,
+            callanswered: onCallAnswer,
+            callended: onCallTerminate
+          }
+        });
+      
+        // Event handler for callincoming event
+        function onIncomingCall(call, isAnonymous) {
+          var callId = call.getId();
+          var callerName = isAnonymous ? 'Anonymous' : call.callerName;
+      
+          calls.push(callId);
+          $audioRingIn[0].play();
+      
+          $callContainer = $('<div>').addClass('call-container btn-toolbar');
+          $callText = $('<p>').text('Call from ' + callerName);
+          $answerBtn = $('<button>').addClass('btn btn-success answer-btn').attr('data-call-id', callId).text('Answer Call');
+          $holdBtn = $('<button>').addClass('btn btn-warning hold-btn hidden').attr('data-call-id', callId).text('Hold Call');
+          $rejectBtn = $('<button>').addClass('btn btn-warning reject-btn').attr('data-call-id', callId).text('Reject Call');
+          $endBtn = $('<button>').addClass('btn btn-danger end-btn hidden').attr('data-call-id', callId).text('End Call');
+      
+          $callContainer.append($callText, $answerBtn, $holdBtn, $endBtn, $rejectBtn);
+          $('#incoming-call').append($callContainer);
+      
+          $answerBtn.on('click', function() {
+            var callId = $(this).attr('data-call-id');
+            kandy.call.answerCall(callId, true);
+          });
+      
+          $rejectBtn.on('click', function() {
+            var callId = $(this).attr('data-call-id');
+            $audioRingIn[0].pause();
+            kandy.call.rejectCall(callId);
+            calls.splice(calls.indexOf(call.getId(), 1));
+            $(this).closest('.call-container').remove();
+          });
+        }
+      
+        // Event handler for callanswered event
+        function onCallAnswer(call, isAnonymous) {
+          var callId = call.getId();
+          var callerName = isAnonymous ? 'Anonymous' : call.callerName;
+      
+          $audioRingIn[0].pause();
+      
+          calls.forEach(function(entry) {
+            if (entry != callId) {
+              holdCall(entry);
+            }
+          });
+      
+          $currentAnswerBtn = $('.answer-btn[data-call-id="' + callId + '"]');
+          $currentAnswerBtn.addClass('hidden');
+      
+          $currentRejectBtn = $('.reject-btn[data-call-id="' + callId + '"]');
+          $currentRejectBtn.addClass('hidden');
+      
+          $currentHoldBtn = $('.hold-btn[data-call-id="' + callId + '"]');
+          $currentHoldBtn.removeClass('hidden');
+          $currentHoldBtn.on('click', function() {
+            holdCall(callId);
+          });
+          $currentHoldBtn.removeClass('hidden');
+      
+          $currentEndBtn = $('.end-btn[data-call-id="' + callId + '"]');
+          $currentEndBtn.removeClass('hidden');
+          $currentEndBtn.on('click', function() {
+            var callId = $(this).attr('data-call-id');
+            kandy.call.endCall(callId);
+            $(this).closest('.call-container').remove();
+          });
+          $currentEndBtn.removeClass('hidden');
+        }
+      
+        // Event handler for callended event
+        function onCallTerminate(call) {
+          $audioRingIn[0].pause();
+          calls.splice(calls.indexOf(call.getId(), 1));
+        }
+      
+        function holdCall(callId) {
+          var holdBtn = $('.hold-btn[data-call-id="' + callId + '"]');
+      
+          holdBtn.text('Unhold Call').removeClass('btn-warning hold-btn').addClass('unhold-btn btn-success');
+          holdBtn.off('click').on('click', function(){
+            unHoldCall(callId);
+          });
+          $holdBtn = $('<button>').addClass('btn btn-warning hold-btn').attr('data-call-id', callId).text('Hold Call');
+      
+          kandy.call.holdCall(callId);
+        }
+      
+        function unHoldCall(callId) {
+          var unholdBtn = $('.unhold-btn[data-call-id="' + callId + '"]');
+      
+          calls.forEach(function(entry) {
+            if (entry != callId) {
+              holdCall(entry);
+            }
+          });
+      
+          unholdBtn.text('Hold Call').removeClass('unhold-btn btn-success').addClass('btn-warning hold-btn');
+          unholdBtn.off('click').on('click', function(){
+            holdCall(callId);
+          });
+      
+          kandy.call.unHoldCall(callId);
+        }
+      
+        var username;
+      var userArray=[];
+      
+      // Event handler for login form button
+      $('#login-btn').on('click', function(e) {
+        e.preventDefault();
+      
+        // Values extracted from login form
+        username = $('#username').val();
+        var apiKey = $('#api_key').val();
+        var password = $('#password').val();
+      
+        /** login(domainApiId, userName, password,success,failure)
+            logs in user to Kandy Platform
+            @params <string> domainApiId, <string> userName, <string> password,  <function> success/failure
+        */
+        kandy.login(apiKey, username, password,function(msg){
+          userArray.push(username);
+          kandy.getLastSeen(userArray);
+          UIState.authenticated();
+          loadContacts();
+        },
+        function(msg){
+          UIState.unauthenticated();
+          alert('Login Failed!');
+       });
+      });
+      
+      // Event handler for logout button
+      $('#logout-btn').on('click', function() {
+      
+        /** logout(success) logs a user out of the Kandy Platform
+            @param <function> success - Callback handler for
+            successful logout
+        */
+        kandy.logout(function() {
+          userArray.push(username);
+          kandy.getLastSeen(userArray);
+          UIState.unauthenticated();
+        });
+      });
+      
+        /** UIState is a custom piece of code that shuffles between UI states
+          eg:: If user is authenticated, the relevant DOM elements are brought to screen
+          and the rest are hidden. Using this method is NOT recommended!
+      */
+      
+      var username, UIState = {};
+      
+      UIState.authenticated = function() {
+        $('#login-form').addClass('hidden');
+        $('#logged-in').removeClass('hidden');
+        $('.username').text(username);
+      };
+      
+      UIState.unauthenticated = function() {
+        $('#login-form').removeClass('hidden');
+        $('#logged-in').addClass('hidden');
+        $('.username').text('');
+      };
+      
+      UIState.initial = function() {
+        console.log('initial');
+      
+        $audioRingIn[0].pause();
+        $audioRingOut[0].pause();
+      
+        $('#call-form p, #incoming-call p, #call-connected p').text('');
+        $('#incoming-call, #call-connected, .call-terminator, #resume-call-btn').addClass('hidden');
+        $('#call-form, .call-initializer').removeClass('hidden')
+      };
+      
+      });
+    </script>
+    <style type="text/css">
+      .call-container {
+        border: 1px solid #eee;
+        padding: 10px;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-8 col-xs-offset-2" id="activity-container">
+          <div id="app-details">
+            <h1 class="h2">
+              Quick Start Sample App: Multi-Call
+            </h1>
+            <p>
+              This sample application demonstrates the code for answering multiple video calls with Kandy. 
+            </p>
+          </div>
+          
+          <form id="login-form" class="simple_form form-horizontal" novalidate="novalidate" action="" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="UU9AwERudob1cdgfjdc9b1x5ElXVgdoDKUAaVavyEOQ5rzpfq3TZTaSB9anzUqDyXXI3Uz8SR1pZJEN6yqsTSQ==" />
+                    <div class="form-group string required quick_start_login_api_key"><label class="string required col-sm-3 control-label" for="api_key"><abbr title="required">*</abbr> Project API Key</label><div class="col-sm-9"><input id="api_key" name="api_key" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group string required quick_start_login_username"><label class="string required col-sm-3 control-label" for="username"><abbr title="required">*</abbr> Username</label><div class="col-sm-9"><input id="username" name="username" class="string required form-control" type="text" /></div></div>
+                    <div class="form-group password required quick_start_login_password"><label class="password required col-sm-3 control-label" for="password"><abbr title="required">*</abbr> Password</label><div class="col-sm-9"><input id="password" name="password" class="password required form-control" type="password" /></div></div>
+                    
+                    <div class="form-group">
+                      <div class="col-sm-offset-3 col-sm-9">
+                        <input type="submit" name="commit" value="Login" id="login-btn" class="btn btn-success" />
+                        
+                      </div>
+                    </div></form>
+          <div class="hidden" id="logged-in">
+            <hr />
+            <div class="clearfix">
+              <p class="h4 pull-left">
+                <strong>Hello <span class="username"></span></strong>
+              </p>
+              <button class="btn btn-danger pull-right" id="logout-btn">Logout</button>
+            </div>
+            <hr />
+            <div id="video-container">
+              <h3>
+                Video
+              </h3>
+              <div class="row">
+                <div class="col-sm-6">
+                  <div class="video" id="incoming-video"></div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="video" id="outgoing-video"></div>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <h3>
+              Incoming Calls
+            </h3>
+            <div id="incoming-call"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
