@@ -1,17 +1,17 @@
-.video .incoming {
+.incoming {
   width: 100vw;
   height: 100vh;
   z-index: -9999;
   position: fixed;
 }
 
-.video .outgoing {
+.outgoing {
+  position: fixed;
   width: 25px;
   height: 50px;
   top: 25px;
   left: 25px;
   z-index: -9999;
-  position: fixed;
 }
 
 .todo {
