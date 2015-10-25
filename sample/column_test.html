@@ -46,10 +46,6 @@
 
 		<div>
 			<div id="video-container">
-				<h3>
-					Video
-				</h3>
-
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="video" id="incoming-video"></div>
@@ -69,7 +65,7 @@
 					<button class="btn btn-success" id="answer-call-btn">Answer Call</button>
 					<button class="btn btn-warning" id="reject-call-btn">Reject Call</button>
 				</div>
-			</div>q
+			</div>
 
 			<div class="hidden" id="call-connected">
 				<h4>
@@ -85,29 +81,45 @@
 		</div>
 
 		<div>
-			<h3>Column 2</h3>
-
-			<div id="hospital_button">
-				<object data="hospital11.svg" type="image/svg+xml" width="50px">
-					<img src="hospital11.png" />
-				</object>
+			<div class="btn-group btn-group-lg" role="group">
+				<button type="button" class="btn btn-default">
+					<div id="hospital_button">
+						<object data="hospital11.svg" type="image/svg+xml" width="25%">
+							<img src="hospital11.png" />
+						</object>
+					</div>
+				</button>
+				<button type="button" class="btn btn-default">
+					<div id="translator_button">
+						<object data="character.svg" type="image/svg+xml" width="25%">
+							<img src="character.png" />
+						</object>
+					</div>
+				</button>
 			</div>
 
-			<div id="translator_button">
-				<object data="character.svg" type="image/svg+xml" width="50px">
-					<img src="character.png" />
-				</object>
-			</div>
+			<hr>
 
 			<div id="patient_info">
-				Patient : Andy Barr Chronic Conditions : Diabetes, Asthma. Allergies : Peanut, Penicillin. Age : 25 Sex : Yes please
+				<b>Patient Name:</b> Andy Barr
+				<br> <b>Chronic Conditions:</b> Diabetes, Asthma
+				<br> <b>Allergies:</b> Peanut, Penicillin
+				<br> <b>Age:</b> 25
+				<br> <b>Sex:</b> Male
+				<hr>
+					111 S Jackson St, Seattle, WA 98104
+				<hr>
 			</div>
 
-			<div>
-				Instructions:
-				<input type="text" id="instruction" name="direction" maxlength="200"/>
-				<br>
-				<button id="send">Send</button>
+			<!-- <div>
+
+				<input type="text" id="instruction" name="direction" maxlength="200" />
+			</div> -->
+
+			<div class="form-group">
+				<label for="comment">Comment:</label>
+				<textarea class="form-control" rows="5" id="instruction"></textarea>
+				<button class="button btn-info btn-block btn-md" id="send">Send</button>
 			</div>
 
 			<script>
